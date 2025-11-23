@@ -199,7 +199,7 @@ const Radio = () => {
             <div className="flex items-center justify-center md:justify-start gap-6">
                 <button onClick={handlePrev} className="text-zinc-400 hover:text-white"><SkipBack size={32}/></button>
                 <button onClick={handlePlayPause} className="w-16 h-16 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105">
-                    {isPlaying ? <Pause size={32} fill="black" /> : <Play size={32} fill="black" ml-1 />}
+                    {isPlaying ? <Pause size={32} fill="black" /> : <Play size={32} fill="black" className="ml-1" />}
                 </button>
                 <button onClick={handleNext} className="text-zinc-400 hover:text-white"><SkipForward size={32}/></button>
                 <button onClick={handleLike} className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 ${isLiked ? "bg-red-500 border-red-500 text-white" : "border-zinc-600 hover:bg-white/10"}`}>
