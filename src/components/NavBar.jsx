@@ -47,7 +47,7 @@ const NavBar = () => {
           <img
             src="/images/logoUnderSounds.png" 
             alt="UnderSounds"
-            className="h-12 w-auto hover:opacity-80 transition"
+            className="h-20 w-auto hover:opacity-80 transition"
             // Nota: Asegúrate de tener esta imagen en public/images/
           />
         </Link>

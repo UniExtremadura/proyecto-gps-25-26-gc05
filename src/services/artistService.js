@@ -1,4 +1,4 @@
-import apiContenidos from '../api/axiosConfig';
+import apiContenidos from '../api/contentApi';
 
 export const getArtists = async () => {
     try {

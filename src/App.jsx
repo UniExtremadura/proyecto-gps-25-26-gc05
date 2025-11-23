@@ -2,16 +2,17 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
+import Home from './pages/Home'; 
 import Marketplace from './pages/Marketplace';
+import { CartProvider } from './contexts/CartContext';
 
-// Componentes temporales para probar la navegación
-const Home = () => <div className="p-10 text-3xl font-bold text-center">🏠 Página de Inicio</div>;
 //const MarketPlace = () => <div className="p-10 text-3xl font-bold text-center">🛒 MarketPlace</div>;
 const Login = () => <div className="p-10 text-3xl font-bold text-center">🔐 Página de Login</div>;
 
 function App() {
   return (
-    <Router>
+  <CartProvider>
+   <Router>
       <div className="flex flex-col min-h-screen bg-gray-50">
         {/* La NavBar siempre visible arriba */}
         <NavBar />
@@ -31,6 +32,7 @@ function App() {
         <Footer />
       </div>
     </Router>
+  </CartProvider>
   );
 }
 

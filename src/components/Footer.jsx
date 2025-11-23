@@ -29,7 +29,7 @@ const Footer = () => {
               <img 
                 src="/images/logoUnderSounds.png" 
                 alt="UnderSounds Logo" 
-                className="h-12"
+                className="h-20 w-auto"
               />
             </Link>
             <p className="text-sm text-gray-400 text-center md:text-left">
