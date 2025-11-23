@@ -3,15 +3,15 @@ import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import { FiMenu, FiX } from "react-icons/fi";
 import { ShoppingCart } from "lucide-react";
 import Button from "./Button"; // Importamos tu botón personalizado
+import { useUser } from "../contexts/UserContext";
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [cartCount] = useState(2); // Valor de prueba
   const [language, setLanguage] = useState("ES");
   
-  // ESTADO TEMPORAL (Simulación de usuario logueado)
-  // Cambia a 'true' para ver cómo se ve la barra cuando hay un usuario
-  const [currentUser, setCurrentUser] = useState(null); 
+ 
+  const { user, logout } = useUser();
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -19,10 +19,10 @@ const NavBar = () => {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const handleLogout = () => {
-    // Aquí pondremos la lógica de Firebase más adelante
-    setCurrentUser(null);
-    alert("Sesión cerrada (Simulación)");
+    logout();
+    navigate("/");
   };
+
 
   const scrollToTop = (path) => {
     if (location.pathname === path) {
@@ -95,20 +95,29 @@ const NavBar = () => {
             )}
           </div>
 
-          {/* Botones de Auth (Usando tu componente Button) */}
+
+          {/* Botones de Auth */}
           <div className="hidden md:flex items-center gap-2 ml-2">
-            {currentUser ? (
-              <Button variant="secondary" size="sm" onClick={handleLogout}>
-                Cerrar Sesión
-              </Button>
+            {user?.token ? (
+              <>
+                <Link to="/profile">
+                  <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+                    Perfil
+                  </Button>
+                </Link>
+
+                <Button variant="secondary" size="sm" onClick={logout}>
+                  Cerrar Sesión
+                </Button>
+              </>
             ) : (
               <>
-                <Link to="/login?form=login">
+                <Link to="/login">
                   <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
                     Ingresar
                   </Button>
                 </Link>
-                <Link to="/login?form=register">
+                <Link to="/register">
                   <Button variant="primary" size="sm">
                     Registro
                   </Button>
@@ -116,6 +125,8 @@ const NavBar = () => {
               </>
             )}
           </div>
+
+
 
           {/* Botón Menú Móvil */}
           <div className="md:hidden">
@@ -136,12 +147,16 @@ const NavBar = () => {
           <Link to="/profile" className="block py-2 hover:text-blue-400" onClick={toggleMenu}>Perfil</Link>
           
           <div className="pt-4 border-t border-gray-700 flex flex-col gap-2">
-            {currentUser ? (
+            {user?.token ? (
               <Button variant="secondary" className="w-full" onClick={handleLogout}>Cerrar Sesión</Button>
             ) : (
               <>
-                <Button variant="ghost" className="w-full justify-start text-white" onClick={() => navigate("/login?form=login")}>Iniciar Sesión</Button>
-                <Button variant="primary" className="w-full" onClick={() => navigate("/login?form=register")}>Registrarse</Button>
+                <Button variant="ghost" className="w-full justify-start text-white" onClick={() => navigate("/login")}>
+                  Iniciar Sesión
+                </Button>
+                <Button variant="primary" className="w-full" onClick={() => navigate("/register")}>
+                  Registrarse
+                </Button>
               </>
             )}
           </div>
