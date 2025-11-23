@@ -1,51 +1,82 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, TrendingUp, Headphones, Star } from "lucide-react";
+import { Sparkles, TrendingUp, Headphones, Star, AlertCircle } from "lucide-react";
 import GenericCarousel from "../components/GenericCarousel";
 import { motion } from "framer-motion";
 
-// --- DATOS MOCK (Simulando el Microservicio de Recomendaciones) ---
-const mockForYou = [
-  { id: 101, title: "Daily Mix 1", image: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9", description: "Extremoduro, Marea y más" },
-  { id: 102, title: "Descubrimiento Semanal", image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4", description: "Núsica nueva seleccionada para ti" },
-  { id: 103, title: "Radar de Novedades", image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745", description: "Lanzamientos de artistas que sigues" },
-  { id: 104, title: "On Repeat", image: "https://images.unsplash.com/photo-1514525253440-b393452e8d26", description: "Las que no paras de escuchar" },
-  { id: 105, title: "Summer Flashback", image: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4", description: "Tus éxitos del verano pasado" },
-];
+// Importamos la API real
+import { getTopTracks, getRecommendedTracks } from "../api/recommendationApi";
 
-const mockTrending = [
-  { id: 201, title: "Top 50 España", image: "https://placehold.co/400x400/blue/white?text=Top+50", description: "Lo más escuchado en el país" },
-  { id: 202, title: "Viral Global", image: "https://placehold.co/400x400/purple/white?text=Viral", description: "Tendencias mundiales" },
-  { id: 203, title: "Éxitos de Hoy", image: "https://placehold.co/400x400/red/white?text=Hits", description: "Solo temazos" },
-  { id: 204, title: "Rock Classics", image: "https://placehold.co/400x400/black/white?text=Rock", description: "Leyendas del rock" },
-];
-
-const mockBecauseYouListened = [
-  { id: 301, title: "Platero y Tú", image: "https://images.unsplash.com/photo-1598387993441-a364f854c3e1", description: "Similar a Extremoduro" },
-  { id: 302, title: "Sinkope", image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d", description: "Rock urbano que te gustará" },
-  { id: 303, title: "Rosendo", image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0", description: "Un clásico imprescindible" },
-];
+// ID de usuario hardcodeado para la demo (coincide con tus datos de prueba SQL: 1001)
+const CURRENT_USER_ID = 1001; 
 
 const Recommendations = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  
+  // Estados para las diferentes listas
+  const [trendingTracks, setTrendingTracks] = useState([]);
+  const [genreRecommendations, setGenreRecommendations] = useState([]);
+  const [likeRecommendations, setLikeRecommendations] = useState([]);
 
-  // Simular carga de API
   useEffect(() => {
-    setTimeout(() => setLoading(false), 1000);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // 1. Cargar Top Global (Métricas)
+        const topData = await getTopTracks();
+        setTrendingTracks(mapTracksToCarousel(topData, "Global Hit"));
+
+        // 2. Cargar Recomendaciones por Género
+        const genreData = await getRecommendedTracks(CURRENT_USER_ID, 'genre');
+        setGenreRecommendations(mapTracksToCarousel(genreData, "Tu estilo"));
+
+        // 3. Cargar Recomendaciones por Likes (Colaborativo)
+        const likeData = await getRecommendedTracks(CURRENT_USER_ID, 'like');
+        setLikeRecommendations(mapTracksToCarousel(likeData, "Basado en tus likes"));
+
+      } catch (error) {
+        console.error("Error cargando recomendaciones:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
+  // Helper para transformar el objeto Track de la API al formato del Carrusel
+  const mapTracksToCarousel = (tracks, subtitle) => {
+    return tracks.map((track) => ({
+      id: track.id,
+      title: track.title || `Track ${track.id}`,
+      // Generamos una imagen placeholder porque la API de métricas devuelve datos puros
+      image: getPlaceholderImage(track.title, track.id), 
+      description: track.genre 
+        ? `${track.genre} • ${track.plays ? track.plays + ' plays' : subtitle}` 
+        : `${track.plays || 0} reproducciones`
+    }));
+  };
+
+  // Generador de imágenes chulas basado en texto (para que no quede gris)
+  const getPlaceholderImage = (text, id) => {
+    // Usamos un servicio de placeholders con estilo
+    const seed = id || text.replace(/\s/g, '');
+    return `https://picsum.photos/seed/${seed}/400/400`; 
+  };
+
   const handleItemClick = (item) => {
-    // Al hacer clic, podríamos ir a una playlist o al artista
-    // Por ahora, vamos al marketplace simulando que buscamos ese término
-    navigate(`/marketplace?category=${encodeURIComponent(item.title)}`);
+    // Navegar al detalle o reproducir
+    console.log("Click en track:", item.id);
+    navigate(`/player/${item.id}`);
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-emerald-500 animate-pulse text-xl font-bold flex items-center gap-2">
-            <Sparkles className="animate-spin" /> Personalizando tu experiencia...
+            <Sparkles className="animate-spin" /> Conectando con Python...
         </div>
       </div>
     );
@@ -65,13 +96,16 @@ const Recommendations = () => {
                 <Sparkles className="text-yellow-400 fill-yellow-400" size={40} /> 
                 Descubrir
             </h1>
-            <p className="text-xl text-gray-300">Música seleccionada especialmente para ti.</p>
+            <p className="text-xl text-gray-300">
+              Métricas en tiempo real calculadas para el usuario 
+              <span className="font-mono text-emerald-400 ml-2">#{CURRENT_USER_ID}</span>
+            </p>
         </motion.div>
       </div>
 
       <div className="container mx-auto px-4 space-y-12">
         
-        {/* SECCIÓN 1: HECHO PARA TI */}
+        {/* SECCIÓN 1: RECOMENDADO POR GÉNERO */}
         <motion.section 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -79,15 +113,19 @@ const Recommendations = () => {
         >
             <div className="flex items-center gap-2 px-4 mb-[-10px]">
                 <Headphones className="text-emerald-400" />
-                <h2 className="text-2xl font-bold">Hecho para ti</h2>
+                <h2 className="text-2xl font-bold">Según lo que escuchas</h2>
             </div>
-            <GenericCarousel 
-                items={mockForYou} 
-                onItemClick={handleItemClick}
-            />
+            {genreRecommendations.length > 0 ? (
+              <GenericCarousel 
+                  items={genreRecommendations} 
+                  onItemClick={handleItemClick}
+              />
+            ) : (
+              <p className="px-4 text-gray-500 mt-4">Escucha más canciones para recibir recomendaciones por género.</p>
+            )}
         </motion.section>
 
-        {/* SECCIÓN 2: TENDENCIAS */}
+        {/* SECCIÓN 2: TENDENCIAS GLOBALES */}
         <motion.section 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -95,15 +133,15 @@ const Recommendations = () => {
         >
             <div className="flex items-center gap-2 px-4 mb-[-10px]">
                 <TrendingUp className="text-red-400" />
-                <h2 className="text-2xl font-bold">Tendencias Globales</h2>
+                <h2 className="text-2xl font-bold">Lo más viral (Top Tracks)</h2>
             </div>
             <GenericCarousel 
-                items={mockTrending} 
+                items={trendingTracks} 
                 onItemClick={handleItemClick}
             />
         </motion.section>
 
-        {/* SECCIÓN 3: PORQUE ESCUCHASTE... */}
+        {/* SECCIÓN 3: PORQUE DISTE LIKE */}
         <motion.section 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -111,12 +149,19 @@ const Recommendations = () => {
         >
             <div className="flex items-center gap-2 px-4 mb-[-10px]">
                 <Star className="text-yellow-400" />
-                <h2 className="text-2xl font-bold">Porque escuchaste "Extremoduro"</h2>
+                <h2 className="text-2xl font-bold">Porque te gustaron tus canciones</h2>
             </div>
-            <GenericCarousel 
-                items={mockBecauseYouListened} 
-                onItemClick={handleItemClick}
-            />
+            {likeRecommendations.length > 0 ? (
+              <GenericCarousel 
+                  items={likeRecommendations} 
+                  onItemClick={handleItemClick}
+              />
+            ) : (
+              <div className="px-4 mt-4 flex items-center gap-2 text-gray-500">
+                <AlertCircle size={18}/> 
+                <p>Da 'Like' a canciones para ver recomendaciones colaborativas.</p>
+              </div>
+            )}
         </motion.section>
 
       </div>
