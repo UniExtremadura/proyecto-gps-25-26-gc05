@@ -3,49 +3,63 @@ import React, { createContext, useState, useContext } from 'react';
 // 1. Crear el contexto
 const CartContext = createContext();
 
-// 2. Crear el componente "Proveedor" que envolverá la app
+// 2. Crear el componente "Proveedor"
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
-  // Añadir producto al carrito
+  // Añadir al carrito (Blindado)
   const addToCart = (product) => {
     setCart((prevCart) => {
-      // ¿El producto ya está en el carrito?
-      const existingItem = prevCart.find((item) => item.id === product.id);
+      // Convertimos IDs a String para comparar con seguridad
+      const existingItem = prevCart.find((item) => String(item.id) === String(product.id));
 
       if (existingItem) {
-        // Si existe, aumentamos la cantidad (simulado)
         return prevCart.map((item) =>
-          item.id === product.id
+          String(item.id) === String(product.id)
             ? { ...item, quantity: (item.quantity || 1) + 1 }
             : item
         );
       } else {
-        // Si no existe, lo añadimos con cantidad 1
+        // Aseguramos que quantity sea un número (1)
         return [...prevCart, { ...product, quantity: 1 }];
       }
     });
-    console.log("Producto añadido:", product.title);
   };
 
-  // Eliminar producto
+  // Actualizar cantidad (Blindado)
+  const updateQuantity = (id, delta) => {
+    console.log(`🔄 Intentando actualizar ID: ${id}, Delta: ${delta}`);
+    
+    setCart(prev => prev.map(item => {
+        // Comparamos IDs como texto para evitar errores de tipo (1 vs "1")
+        if (String(item.id) === String(id)) {
+            // Aseguramos que sea número antes de sumar
+            const currentQty = parseInt(item.quantity) || 0;
+            const newQty = Math.max(1, currentQty + delta);
+            
+            console.log(`   ✅ Cantidad cambiada: ${currentQty} -> ${newQty}`);
+            return { ...item, quantity: newQty };
+        }
+        return item;
+    }));
+  };
+
   const removeFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    setCart((prevCart) => prevCart.filter((item) => String(item.id) !== String(productId)));
   };
 
-  // Limpiar carrito
   const clearCart = () => {
     setCart([]);
   };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, updateQuantity }}>
       {children}
     </CartContext.Provider>
   );
 };
 
-// 3. Hook personalizado para usar el carrito fácilmente
+// 3. Hook personalizado
 // eslint-disable-next-line react-refresh/only-export-components
 export const useCart = () => {
   const context = useContext(CartContext);

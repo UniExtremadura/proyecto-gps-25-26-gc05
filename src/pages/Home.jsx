@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import HomeWindow from "../components/HomeWindow";
 import ProductCategories from "../components/ProductCategories"; // Asegúrate de tener este (si no, quítalo)
 import GenericCarousel from "../components/GenericCarousel";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 // --- DATOS DE PRUEBA ---
 const mockEvents = [
@@ -20,6 +22,16 @@ const mockNews = [
 ];
 
 const Home = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  
+  // 2. INICIALIZAR NAVEGACIÓN
+  const navigate = useNavigate(); 
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   return (
     <div className="bg-gray-50 min-h-screen">
       
@@ -63,12 +75,12 @@ const Home = () => {
 
         {/* Próximos Eventos */}
         <section>
-            <GenericCarousel items={mockEvents} title="📅 Próximos Eventos" />
+            <GenericCarousel items={mockEvents} title="📅 Próximos Eventos" onItemClick={() => navigate("/newsletter")}/>
         </section>
 
         {/* Noticias */}
         <section>
-            <GenericCarousel items={mockNews} title="📰 Últimas Noticias" />
+            <GenericCarousel items={mockNews} title="📰 Últimas Noticias" onItemClick={() => navigate("/newsletter")}/>
         </section>
 
       </div>

@@ -56,6 +56,10 @@ const NavBar = () => {
         <div className="hidden md:flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
           <NavLink to="/" end onClick={() => scrollToTop("/")} className={linkStyles}>Inicio</NavLink>
           <span className="text-gray-600">|</span>
+          <NavLink to="/descubrir" onClick={() => scrollToTop("/descubrir")} className={linkStyles}>
+              Descubrir
+          </NavLink>
+          <span className="text-gray-600">|</span>
           <NavLink to="/marketplace" onClick={() => scrollToTop("/marketplace")} className={linkStyles}>MarketPlace</NavLink>
           <span className="text-gray-600">|</span>
           <NavLink to="/newsletter" onClick={() => scrollToTop("/newsletter")} className={linkStyles}>NewsLetter</NavLink>

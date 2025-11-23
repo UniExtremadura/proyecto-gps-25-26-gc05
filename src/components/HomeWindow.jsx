@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Datos de ejemplo para el banner
 const bannerItems = [
@@ -8,6 +9,7 @@ const bannerItems = [
 
 const HomeWindow = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -32,7 +34,10 @@ const HomeWindow = () => {
         <div className="absolute bottom-0 left-0 p-8 md:p-12 text-white max-w-2xl">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{bannerItems[currentIndex].title}</h2>
           <p className="text-lg text-gray-300 mb-6">Descubre la colección completa en nuestro Marketplace.</p>
-          <button className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+          <button 
+            onClick={() => navigate("/marketplace")}
+            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105 shadow-lg hover:shadow-blue-500/50"
+          >
             Ver más detalles
           </button>
         </div>

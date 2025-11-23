@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const GenericCarousel = ({ items, title }) => {
+// Aceptamos una nueva prop: onItemClick
+const GenericCarousel = ({ items, title, onItemClick }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  // En móvil muestra 1, en escritorio 4
   const itemsPerView = window.innerWidth < 768 ? 1 : 4; 
   const totalSlides = Math.ceil(items.length / itemsPerView);
 
@@ -22,7 +22,12 @@ const GenericCarousel = ({ items, title }) => {
           {Array.from({ length: totalSlides }).map((_, slideIndex) => (
              <div key={slideIndex} className="w-full flex-shrink-0 flex gap-6">
                 {items.slice(slideIndex * itemsPerView, (slideIndex + 1) * itemsPerView).map((item) => (
-                    <div key={item.id} className="flex-1 min-w-0 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group">
+                    <div 
+                        key={item.id} 
+                        // AQUI ESTÁ EL CAMBIO: Si hay función onItemClick, la ejecutamos
+                        onClick={() => onItemClick && onItemClick(item)}
+                        className="flex-1 min-w-0 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all cursor-pointer group hover:-translate-y-1"
+                    >
                         <div className="h-48 overflow-hidden">
                             <img 
                                 src={item.image || 'https://placehold.co/400x300?text=No+Image'} 
@@ -42,7 +47,6 @@ const GenericCarousel = ({ items, title }) => {
         </div>
       </div>
 
-      {/* Botones de navegación flotantes */}
       <button onClick={prevSlide} className="absolute left-0 top-1/2 z-10 -translate-y-1/2 bg-white border border-gray-200 p-2 rounded-full shadow-lg hover:bg-gray-100 hover:scale-110 transition-all">
         <ChevronLeft className="w-6 h-6 text-gray-700" />
       </button>
