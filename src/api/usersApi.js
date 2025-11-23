@@ -23,4 +23,16 @@ export const addLike = async (userId, trackId) => {
     }
 };
 
+export const registerPlay = async (userId, trackId) => {
+    try {
+        // OJO: Java espera números ahora (Long)
+        const body = { idTrack: Number(trackId) };
+        // El endpoint en Java es /users/{idUser}/play
+        await usersApi.post(`/users/${userId}/play`, body);
+        console.log(`📡 Play registrado en Backend: User ${userId} -> Track ${trackId}`);
+    } catch (error) {
+        console.error("Error registrando play:", error);
+    }
+};
+
 export default usersApi;
