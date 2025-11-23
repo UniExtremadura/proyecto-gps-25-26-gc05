@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getTracks, getArtists, getAlbums } from "../api/contentApi";
-import { addLike } from "../api/usersApi"; // Importamos la API de usuarios
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, ListMusic, Heart } from "lucide-react";
+import { addLike } from "../api/usersApi";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, ListMusic, Heart, Search, X } from "lucide-react";
 
 const Radio = () => {
   // --- ESTADOS DE DATOS ---
@@ -10,36 +10,37 @@ const Radio = () => {
   const [artists, setArtists] = useState([]);
   const [albums, setAlbums] = useState([]);
 
+  // --- ESTADOS DE FILTRO (NUEVO) ---
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState("Todos");
+
   // --- ESTADOS DEL REPRODUCTOR ---
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(0.5);
-  
-  // --- ESTADOS DE UI ---
   const [loading, setLoading] = useState(true);
-  const [isLiked, setIsLiked] = useState(false); // Estado del corazón
+  const [isLiked, setIsLiked] = useState(false);
 
-  // Referencia al audio HTML5
   const audioRef = useRef(null);
 
-  // 1. Cargar TODO al iniciar (Tracks, Artists, Albums)
+  // 1. Cargar Datos
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Pedimos size=1000 para traer todos los datos
         const [tracksData, artistsData, albumsData] = await Promise.all([
             getTracks(), 
             getArtists(),
             getAlbums(0, 1000)
         ]);
         
-        // Filtramos canciones que tengan archivo
-        const validTracks = tracksData.filter(t => t.fileUrl || t.file_url);
+        const validTracks = tracksData.map(t => ({
+            ...t,
+            fileUrl: t.fileUrl || t.file_url || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+        }));
         
         setPlaylist(validTracks);
         setArtists(artistsData);
         setAlbums(albumsData);
-        
         setLoading(false);
       } catch (error) {
         console.error("Error cargando radio:", error);
@@ -49,220 +50,217 @@ const Radio = () => {
     loadData();
   }, []);
 
-  // 2. Controlar el audio cuando cambia la canción o el estado
+  // 2. Control Audio
   useEffect(() => {
     if (playlist.length > 0 && audioRef.current) {
       audioRef.current.volume = volume;
       if (isPlaying) {
-        // Promesa para evitar errores de "play() failed because user didn't interact"
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
-            playPromise.catch(error => console.warn("Auto-play prevenido por el navegador:", error));
+            playPromise.catch(error => console.warn("Auto-play prevenido:", error));
         }
       }
     }
   }, [currentTrackIndex, playlist]);
 
-  // 3. Resetear el corazón cuando cambia la canción
-  useEffect(() => {
-      setIsLiked(false); 
-      // (Aquí podríamos consultar al backend si ya le dio like, pero por ahora reseteamos)
-  }, [currentTrackIndex]);
+  useEffect(() => { setIsLiked(false); }, [currentTrackIndex]);
 
   // --- HELPERS ---
   const getArtistName = (albumId) => {
-     if (!albumId) return "Cargando...";
-     if (albums.length === 0 || artists.length === 0) return "Cargando...";
-
-     // 1. Buscar álbum
+     if (!albumId || albums.length === 0) return "Cargando...";
      const album = albums.find(a => String(a.id) === String(albumId));
-     if (!album) return "Álbum desconocido";
-
-     // 2. Buscar artista
+     if (!album) return "Desconocido";
      const realArtistId = album.artistId || album.artist_id;
      const artist = artists.find(a => String(a.id) === String(realArtistId));
-     
-     return artist ? artist.name : "Artista desconocido"; 
+     return artist ? artist.name : "Desconocido"; 
   };
 
-  // --- ACCIONES DE USUARIO ---
+  // --- LÓGICA DE FILTRADO (NUEVO) ---
+  const getFilteredPlaylist = () => {
+      return playlist.filter(track => {
+          // 1. Filtro de Texto (Título o Artista)
+          const artistName = getArtistName(track.albumId || track.album_id).toLowerCase();
+          const title = track.title.toLowerCase();
+          const query = searchQuery.toLowerCase();
+          const matchesSearch = title.includes(query) || artistName.includes(query);
+
+          // 2. Filtro de Género
+          // (Asumimos que el género está en el track, si no, habría que buscarlo en el artista)
+          const matchesGenre = selectedGenre === "Todos" || 
+                               (track.genre && track.genre.toLowerCase() === selectedGenre.toLowerCase());
+
+          return matchesSearch && matchesGenre;
+      });
+  };
+
+  const filteredTracks = getFilteredPlaylist();
+
+  // --- HANDLERS ---
+  const handleTrackClick = (track) => {
+      // Buscamos el índice real en la playlist completa (no en la filtrada)
+      const originalIndex = playlist.findIndex(t => t.id === track.id);
+      if (originalIndex !== -1) {
+          setCurrentTrackIndex(originalIndex);
+          setIsPlaying(true);
+      }
+  };
 
   const handleLike = async () => {
-    // Si no hay canción sonando, no hacemos nada
     if (!playlist[currentTrackIndex]) return;
-
     const currentTrack = playlist[currentTrackIndex];
-    const userId = "1"; // ID temporal hasta que tengamos Login real
-
+    const userId = "1"; 
     try {
-      setIsLiked(true); // Feedback visual inmediato
+      setIsLiked(true);
       await addLike(userId, currentTrack.id);
-      console.log(`❤️ Like guardado: Usuario ${userId} -> Canción ${currentTrack.id}`);
     } catch (error) {
-      console.error("Error guardando like:", error);
-      setIsLiked(false); // Revertimos si falla
-      // alert("No se pudo conectar con el servicio de Usuarios (8080)");
+      setIsLiked(false);
     }
   };
 
-  const handlePlayPause = () => {
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
+  const handlePlayPause = () => isPlaying ? audioRef.current.pause() : audioRef.current.play();
 
-  const handleNext = () => {
-    setCurrentTrackIndex((prev) => (prev + 1) % playlist.length);
-  };
-
-  const handlePrev = () => {
-    setCurrentTrackIndex((prev) => (prev - 1 + playlist.length) % playlist.length);
-  };
-
+  // Funciones del reproductor (Next/Prev/Time)...
+  const handleNext = () => setCurrentTrackIndex((prev) => (prev + 1) % playlist.length);
+  const handlePrev = () => setCurrentTrackIndex((prev) => (prev - 1 + playlist.length) % playlist.length);
   const handleTimeUpdate = () => {
-    if(audioRef.current) {
-        const current = audioRef.current.currentTime;
-        const duration = audioRef.current.duration;
-        if(duration > 0) setProgress((current / duration) * 100);
-    }
+      if(audioRef.current && audioRef.current.duration) {
+          setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
+      }
   };
 
-  const handleTrackEnded = () => {
-    handleNext();
-  };
-
-  // --- RENDERIZADO ---
   if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Sintonizando...</div>;
-  if (playlist.length === 0) return <div className="min-h-screen bg-black text-white flex items-center justify-center">No hay canciones disponibles.</div>;
+  if (playlist.length === 0) return <div className="min-h-screen bg-black text-white flex items-center justify-center">No hay canciones.</div>;
 
   const currentTrack = playlist[currentTrackIndex];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex flex-col items-center py-10 px-4">
       
+      {/* HEADER */}
       <div className="text-center mb-8 animate-fade-in">
         <h1 className="text-4xl font-bold tracking-wider flex items-center justify-center gap-3">
-          <Music className="text-emerald-500" size={40} /> 
-          RADIO <span className="text-emerald-500">UNDERSOUNDS</span>
+          <Music className="text-emerald-500" size={40} /> RADIO <span className="text-emerald-500">UNDERSOUNDS</span>
         </h1>
-        <p className="text-zinc-400 mt-2">La mejor música independiente, 24/7</p>
       </div>
 
-      <div className="w-full max-w-4xl bg-zinc-900/80 backdrop-blur-md rounded-3xl border border-zinc-800 p-8 shadow-2xl flex flex-col md:flex-row gap-10 items-center">
-        
-        {/* Disco Giratorio */}
+      {/* REPRODUCTOR (Igual que antes) */}
+      <div className="w-full max-w-4xl bg-zinc-900/80 backdrop-blur-md rounded-3xl border border-zinc-800 p-8 shadow-2xl flex flex-col md:flex-row gap-10 items-center mb-8">
+        {/* Disco */}
         <div className="relative w-64 h-64 flex-shrink-0">
            <div className={`w-full h-full rounded-full border-4 border-zinc-800 overflow-hidden shadow-xl relative ${isPlaying ? 'animate-spin-slow' : ''}`} style={{ animationDuration: '10s' }}>
-              <img 
-                src="https://placehold.co/400x400/10b981/ffffff?text=Vinyl" 
-                alt="Cover" 
-                className="w-full h-full object-cover"
-              />
+              <img src="https://placehold.co/400x400/10b981/ffffff?text=Vinyl" alt="Cover" className="w-full h-full object-cover"/>
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-zinc-900 rounded-full border-2 border-zinc-700"></div>
            </div>
         </div>
-
-        {/* Info y Controles */}
+        {/* Controles */}
         <div className="flex-1 w-full flex flex-col justify-center">
             <div className="text-center md:text-left mb-6">
-                <h2 className="text-3xl font-bold text-white truncate">{currentTrack.title}</h2>
-                
-                <p className="text-xl text-emerald-400 mt-1">
-                    {getArtistName(currentTrack.albumId || currentTrack.album_id)}
-                </p>
-                
-                <span className="inline-block mt-2 px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">
-                    {currentTrack.genre || "Sin género"}
-                </span>
+                <h2 className="text-3xl font-bold text-white truncate">{currentTrack?.title}</h2>
+                <p className="text-xl text-emerald-400 mt-1">{getArtistName(currentTrack?.albumId || currentTrack?.album_id)}</p>
+                <span className="inline-block mt-2 px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">{currentTrack?.genre || "Sin género"}</span>
             </div>
-
+            {/* Barra */}
             <div className="mb-6">
                 <div className="w-full bg-zinc-700 rounded-full h-2 mb-2 cursor-pointer relative">
-                    <div className="bg-emerald-500 h-2 rounded-full transition-all duration-100" style={{ width: `${progress}%` }}></div>
-                </div>
-                <div className="flex justify-between text-xs text-zinc-500 font-mono">
-                    <span>0:00</span>
-                    <span>{currentTrack.duration}</span>
+                    <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
                 </div>
             </div>
-
+            {/* Botones */}
             <div className="flex items-center justify-center md:justify-start gap-6">
-                <button onClick={handlePrev} className="text-zinc-400 hover:text-white transition-colors"><SkipBack size={32}/></button>
-                
-                <button onClick={handlePlayPause} className="w-16 h-16 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20 transition-transform hover:scale-105">
+                <button onClick={handlePrev} className="text-zinc-400 hover:text-white"><SkipBack size={32}/></button>
+                <button onClick={() => { handlePlayPause(); setIsPlaying(!isPlaying); }} className="w-16 h-16 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105">
                     {isPlaying ? <Pause size={32} fill="black" /> : <Play size={32} fill="black" ml-1 />}
                 </button>
-                
-                <button onClick={handleNext} className="text-zinc-400 hover:text-white transition-colors"><SkipForward size={32}/></button>
-                
-                {/* Botón de LIKE */}
-                <button 
-                   onClick={handleLike}
-                   className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 ${
-                       isLiked 
-                       ? "bg-red-500 border-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]" 
-                       : "border-zinc-600 hover:bg-white/10 hover:border-white text-white"
-                   }`}
-                   title="Me gusta"
-                >
+                <button onClick={handleNext} className="text-zinc-400 hover:text-white"><SkipForward size={32}/></button>
+                <button onClick={handleLike} className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 ${isLiked ? "bg-red-500 border-red-500 text-white" : "border-zinc-600 hover:bg-white/10"}`}>
                    <Heart className="w-5 h-5" fill={isLiked ? "currentColor" : "none"} />
                 </button>
-
                 {/* Volumen */}
                 <div className="flex items-center gap-2 ml-auto group">
                     <button onClick={() => setVolume(v => v === 0 ? 0.5 : 0)} className="text-zinc-400 group-hover:text-white">
                         {volume === 0 ? <VolumeX size={20}/> : <Volume2 size={20}/>}
                     </button>
-                    <input 
-                        type="range" min="0" max="1" step="0.01" 
-                        value={volume} 
-                        onChange={(e) => {
-                            setVolume(parseFloat(e.target.value));
-                            if(audioRef.current) audioRef.current.volume = parseFloat(e.target.value);
-                        }}
-                        className="w-20 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
-                    />
+                    <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(e) => { setVolume(parseFloat(e.target.value)); if(audioRef.current) audioRef.current.volume = parseFloat(e.target.value); }} className="w-20 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"/>
                 </div>
             </div>
         </div>
       </div>
 
-      {/* Lista "A continuación" */}
-      <div className="w-full max-w-4xl mt-12">
+      {/* --- BARRA DE FILTROS (NUEVO) --- */}
+      <div className="w-full max-w-4xl mb-6 flex flex-col md:flex-row gap-4 justify-between items-center bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+         {/* Buscador */}
+         <div className="relative w-full md:w-1/2 group">
+            <Search className="absolute left-3 top-2.5 w-5 h-5 text-zinc-500 group-focus-within:text-emerald-500" />
+            <input 
+                type="text" 
+                placeholder="Buscar canción o artista..." 
+                className="w-full bg-black border border-zinc-700 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:border-emerald-500 transition-colors text-white"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-3 top-2.5 text-zinc-500 hover:text-white">
+                    <X size={16} />
+                </button>
+            )}
+         </div>
+         
+         {/* Géneros */}
+         <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-hide">
+             {["Todos", "Rock", "Pop", "Indie", "Metal", "Jazz", "Electrónica", "Urbano", "Clásica", "Hard Rock", "Pop Rock", "Ballad"].map(genre => (
+                 <button 
+                    key={genre}
+                    onClick={() => setSelectedGenre(genre)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${selectedGenre === genre ? "bg-emerald-500 text-black" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white"}`}
+                 >
+                    {genre}
+                 </button>
+             ))}
+         </div>
+      </div>
+
+      {/* LISTA FILTRADA */}
+      <div className="w-full max-w-4xl">
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <ListMusic className="text-emerald-500" /> A continuación
+            <ListMusic className="text-emerald-500" /> 
+            {searchQuery || selectedGenre !== "Todos" ? "Resultados de Búsqueda" : "Cola de Reproducción"}
         </h3>
-        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 overflow-hidden max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700">
-            {playlist.map((track, index) => (
-                <div 
-                    key={track.id} 
-                    onClick={() => { setCurrentTrackIndex(index); setIsPlaying(true); }}
-                    className={`flex items-center p-4 border-b border-zinc-800 hover:bg-white/5 cursor-pointer transition-colors ${index === currentTrackIndex ? 'bg-white/10 border-l-4 border-l-emerald-500' : ''}`}
-                >
-                    <div className="w-8 text-center text-zinc-500 font-mono text-sm">
-                        {index === currentTrackIndex ? <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse mx-auto"></div> : index + 1}
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 overflow-hidden max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700">
+            {filteredTracks.length > 0 ? filteredTracks.map((track) => {
+                // Encontrar el índice original para saber si es la que suena
+                const originalIndex = playlist.findIndex(t => t.id === track.id);
+                const isActive = originalIndex === currentTrackIndex;
+                
+                return (
+                    <div 
+                        key={track.id} 
+                        onClick={() => handleTrackClick(track)}
+                        className={`flex items-center p-4 border-b border-zinc-800 hover:bg-white/5 cursor-pointer transition-colors ${isActive ? 'bg-white/10 border-l-4 border-l-emerald-500' : ''}`}
+                    >
+                        <div className="w-8 text-center text-zinc-500 font-mono text-sm">
+                            {isActive ? <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse mx-auto"></div> : <Play size={14} className="mx-auto opacity-50" />}
+                        </div>
+                        <div className="flex-1 px-4 min-w-0">
+                            <p className={`font-medium truncate ${isActive ? 'text-emerald-400' : 'text-white'}`}>{track.title}</p>
+                            <p className="text-xs text-zinc-500 truncate">
+                                {getArtistName(track.albumId || track.album_id)}
+                            </p>
+                        </div>
+                        <div className="text-zinc-500 text-xs px-2 py-1 rounded border border-zinc-800 bg-black/30 mr-4 hidden sm:block">
+                            {track.genre || "-"}
+                        </div>
+                        <div className="text-zinc-500 text-sm font-mono">{track.duration}</div>
                     </div>
-                    <div className="flex-1 px-4">
-                        <p className={`font-medium ${index === currentTrackIndex ? 'text-emerald-400' : 'text-white'}`}>{track.title}</p>
-                        <p className="text-xs text-zinc-500">
-                            {getArtistName(track.albumId || track.album_id)}
-                        </p>
-                    </div>
-                    <div className="text-zinc-500 text-sm font-mono">{track.duration}</div>
+                );
+            }) : (
+                <div className="p-8 text-center text-zinc-500 italic">
+                    No se encontraron canciones con esos filtros.
                 </div>
-            ))}
+            )}
         </div>
       </div>
 
-      <audio 
-        ref={audioRef} 
-        src={currentTrack ? (currentTrack.fileUrl || currentTrack.file_url) : ""} 
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={handleTrackEnded}
-      />
+      <audio ref={audioRef} src={currentTrack ? (currentTrack.fileUrl || currentTrack.file_url) : ""} onTimeUpdate={handleTimeUpdate} onEnded={() => handleNext()} />
     </div>
   );
 };
