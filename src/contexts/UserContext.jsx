@@ -53,7 +53,7 @@ export const UserProvider = ({ children }) => {
           : null,
         login,
         logout,
-        isAuthenticated: !!token
+        isAuthenticated: Boolean(token)
       }}
     >
       {children}
