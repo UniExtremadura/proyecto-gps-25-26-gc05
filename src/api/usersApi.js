@@ -126,7 +126,8 @@ export const deletePaymentMethod = async (userId, paymentMethodId) => {
 /* ========= LIKES / SUSCRIPCIONES / PLAYS ========= */
 
 export const addLike = async (userId, trackId) => {
-  const body = { idTrack: String(trackId) };
+  const body = { idUser: String(userId), idTrack: String(trackId) };
+  console.log("📡 ADD LIKE → body:", body);
   const res = await usersApi.post(`/users/${userId}/likes`, body);
   return res.status === 201;
 };
@@ -153,8 +154,9 @@ export const deleteSubscription = async (userId, artistId) => {
 };
 
 export const registerPlay = async (userId, trackId) => {
+  console.log("📡 REGISTER PLAY → userId:", userId, "trackId:", trackId);
   const body = { idTrack: String(trackId) };
-  const res = await usersApi.post(`/users/${userId}/plays`, body);
+  const res = await usersApi.post(`/users/${userId}/play`, body);
   return res.status === 201;
 };
 
