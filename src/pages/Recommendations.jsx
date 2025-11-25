@@ -7,8 +7,7 @@ import { motion } from "framer-motion";
 // Importamos nuestra nueva API
 import { getTopTracks, getRecommendedTracks } from "../api/recommendationApi";
 
-// ID de usuario hardcodeado para pruebas (Coincide con tu SQL: 1001)
-const CURRENT_USER_ID = 1001;
+
 
 const Recommendations = () => {
   const navigate = useNavigate();
@@ -19,6 +18,19 @@ const Recommendations = () => {
   const [genreRecommendations, setGenreRecommendations] = useState([]);
   const [likeRecommendations, setLikeRecommendations] = useState([]);
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        //hay que crear el export en usersApi.js (para que llame a la api de usuarios)
+        const idData = await getUserProfile(user.userId);
+      } catch (err) {
+        console.error("Error al obtener id de Usuario:", err);
+      }
+    };
+    idData;
+    }, []);
+    
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -29,11 +41,11 @@ const Recommendations = () => {
         setTrendingTracks(mapTracksToCarousel(topData, "Éxito Global"));
 
         // 2. Cargar Recomendaciones por Género
-        const genreData = await getRecommendedTracks(CURRENT_USER_ID, 'genre');
+        const genreData = await getRecommendedTracks(idData, 'genre');
         setGenreRecommendations(mapTracksToCarousel(genreData, "Tu estilo favorito"));
 
         // 3. Cargar Recomendaciones por Likes (Colaborativo)
-        const likeData = await getRecommendedTracks(CURRENT_USER_ID, 'like');
+        const likeData = await getRecommendedTracks(idData, 'like');
         setLikeRecommendations(mapTracksToCarousel(likeData, "Basado en tus likes"));
 
       } catch (error) {
