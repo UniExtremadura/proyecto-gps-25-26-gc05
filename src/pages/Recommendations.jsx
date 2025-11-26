@@ -5,7 +5,11 @@ import GenericCarousel from "../components/GenericCarousel";
 import { motion } from "framer-motion";
 
 // Importamos nuestra nueva API
-import { getTopTracks, getRecommendedTracks } from "../api/recommendationApi";
+import { 
+  getTopTracks, 
+  getRecommendedTracksByGenre, 
+  getRecommendedTracksByLike 
+} from "../api/recommendationApi";
 
 
 
@@ -18,6 +22,7 @@ const Recommendations = () => {
   const [genreRecommendations, setGenreRecommendations] = useState([]);
   const [likeRecommendations, setLikeRecommendations] = useState([]);
 
+<<<<<<< Updated upstream
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     const loadProfile = async () => {
@@ -32,20 +37,32 @@ const Recommendations = () => {
     }, []);
     
   useEffect(() => {
+=======
+useEffect(() => {
+>>>>>>> Stashed changes
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // 1. Cargar Top Global (Métricas puras)
+        // 1. Cargar Top Global
         const topData = await getTopTracks();
         setTrendingTracks(mapTracksToCarousel(topData, "Éxito Global"));
 
+<<<<<<< Updated upstream
         // 2. Cargar Recomendaciones por Género
         const genreData = await getRecommendedTracks(idData, 'genre');
         setGenreRecommendations(mapTracksToCarousel(genreData, "Tu estilo favorito"));
 
         // 3. Cargar Recomendaciones por Likes (Colaborativo)
         const likeData = await getRecommendedTracks(idData, 'like');
+=======
+        // 2. Cargar Recomendaciones por Género (NUEVO: función específica)
+        const genreData = await getRecommendedTracksByGenre(CURRENT_USER_ID);
+        setGenreRecommendations(mapTracksToCarousel(genreData, "Tu estilo favorito"));
+
+        // 3. Cargar Recomendaciones por Likes (NUEVO: función específica)
+        const likeData = await getRecommendedTracksByLike(CURRENT_USER_ID);
+>>>>>>> Stashed changes
         setLikeRecommendations(mapTracksToCarousel(likeData, "Basado en tus likes"));
 
       } catch (error) {

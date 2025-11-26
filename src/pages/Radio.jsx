@@ -3,6 +3,12 @@ import { getTracks, getArtists, getAlbums } from "../api/contentApi";
 import { addLike, registerPlay } from "../api/usersApi"; // <--- IMPORTANTE: Añadido registerPlay
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, ListMusic, Heart, Search, X } from "lucide-react";
 
+<<<<<<< Updated upstream
+=======
+// ID consistente con tu base de datos para que las métricas funcionen
+const CURRENT_USER_ID = 1002; 
+
+>>>>>>> Stashed changes
 const Radio = () => {
   // --- ESTADOS DE DATOS ---
   const [playlist, setPlaylist] = useState([]);
