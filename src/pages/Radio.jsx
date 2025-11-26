@@ -3,9 +3,12 @@ import { getTracks, getArtists, getAlbums } from "../api/contentApi";
 import { addLike, registerPlay } from "../api/usersApi"; // <--- IMPORTANTE: Añadido registerPlay
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, ListMusic, Heart, Search, X } from "lucide-react";
 
+<<<<<<< Updated upstream
+=======
 // ID consistente con tu base de datos para que las métricas funcionen
-const CURRENT_USER_ID = 1001; 
+const CURRENT_USER_ID = 1002; 
 
+>>>>>>> Stashed changes
 const Radio = () => {
   // --- ESTADOS DE DATOS ---
   const [playlist, setPlaylist] = useState([]);
@@ -25,6 +28,19 @@ const Radio = () => {
   const [isLiked, setIsLiked] = useState(false);
 
   const audioRef = useRef(null);
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // cargar el id de usuario actual
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        //hay que crear el export en usersApi.js (para que llame a la api de usuarios)
+        const idData = await getUserProfile(user.userId);
+      } catch (err) {
+        console.error("Error al obtener id de Usuario:", err);
+      }
+    };
+    idData;
+    }, []);
 
   // 1. Cargar Datos
   useEffect(() => {
@@ -63,12 +79,11 @@ const Radio = () => {
         if (playPromise !== undefined) {
             playPromise
                 .then(() => {
-                    // <--- AQUÍ ESTÁ EL CAMBIO CLAVE ---
-                    // Registramos el play en el backend cuando empieza a sonar
                     const track = playlist[currentTrackIndex];
                     if (track) {
-                        // Llamada asíncrona (no esperamos respuesta para no bloquear)
-                        registerPlay(CURRENT_USER_ID, track.id);
+                        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                      
+                        registerPlay(idData, track.id); // Llamada a la función para registrar el play (esta se encuentra en usersApi.js)
+                        //no hace falta String() porque en usersApi.js ya se convierte a String para pasarlo en el body a user (que tiene las ids en String)
                     }
                 })
                 .catch(error => console.warn("Auto-play prevenido:", error));
@@ -133,8 +148,7 @@ const Radio = () => {
     setIsLiked(true);
     
     try {
-      // Usamos el ID real (1001) y Long para el track
-      await addLike(CURRENT_USER_ID, currentTrack.id);
+      await addLike(idData, String(currentTrack.id));
       console.log(`❤️ Like registrado: ${currentTrack.id}`);
     } catch (error) {
       console.error("Error like:", error);
