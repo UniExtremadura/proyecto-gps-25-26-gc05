@@ -9,14 +9,17 @@ import CheckoutPage from './pages/CheckoutPage';
 import ConfirmationPage from './pages/ConfirmationPage';
 import ScrollToTop from './components/ScrollToTop';
 import Recommendations from './pages/Recommendations';
+import Login from './pages/Login.jsx';
+import Register from './pages/Register';
+import Profile from './pages/Profile';
+
 
 // Páginas
 import Home from './pages/Home';
 import MarketPlace from './pages/MarketPlace';
-import NewsLetter from './pages/NewsLetter'; // <--- IMPORTAR
+import NewsLetter from './pages/NewsLetter';
 
 // Temporales
-const Login = () => <div className="p-20 text-center">🚧 Login en construcción</div>;
 
 function App() {
   return (
@@ -29,14 +32,15 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/marketplace" element={<MarketPlace />} />
-              <Route path="/newsletter" element={<NewsLetter />} /> {/* <--- USAR AQUÍ */}
+              <Route path="/newsletter" element={<NewsLetter />} />
               <Route path="/radio" element={<Radio />} />
               <Route path="/descubrir" element={<Recommendations />} />
-              <Route path="/profile" element={<div className="p-20">Perfil</div>} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/confirmacion" element={<ConfirmationPage />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/profile" element={<Profile />} />
             </Routes>
           </div>
           <Footer />

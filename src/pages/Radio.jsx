@@ -107,6 +107,13 @@ const Radio = () => {
      return artist ? artist.name : "Desconocido"; 
   };
 
+  const getAlbumCover = (albumId) => {
+     if (!albumId || albums.length === 0) return null;
+     const album = albums.find(a => String(a.id) === String(albumId));
+     // Probamos coverUrl (frontend) o cover_url (backend)
+     return album ? (album.coverUrl || album.cover_url) : null;
+  };
+
   // --- LÓGICA DE FILTRADO ---
   const getFilteredPlaylist = () => {
       return playlist.filter(track => {
@@ -171,6 +178,7 @@ const Radio = () => {
   if (playlist.length === 0) return <div className="min-h-screen bg-black text-white flex items-center justify-center">No hay canciones disponibles.</div>;
 
   const currentTrack = playlist[currentTrackIndex];
+  const currentCover = getAlbumCover(currentTrack?.albumId || currentTrack?.album_id) || "https://placehold.co/400x400/10b981/ffffff?text=Vinyl";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex flex-col items-center py-10 px-4">
@@ -187,7 +195,12 @@ const Radio = () => {
         {/* Disco */}
         <div className="relative w-64 h-64 flex-shrink-0">
            <div className={`w-full h-full rounded-full border-4 border-zinc-800 overflow-hidden shadow-xl relative ${isPlaying ? 'animate-spin-slow' : ''}`} style={{ animationDuration: '10s' }}>
-              <img src={`https://picsum.photos/seed/${currentTrack?.id}/400/400`} alt="Cover" className="w-full h-full object-cover opacity-80"/>
+              <img 
+                src={currentCover} 
+                alt="Cover" 
+                className="w-full h-full object-cover opacity-90"
+                onError={(e) => e.target.src = "https://placehold.co/400x400/333/fff?text=No+Cover"}
+              />
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-zinc-900 rounded-full border-2 border-zinc-700"></div>
            </div>
         </div>
@@ -251,7 +264,7 @@ const Radio = () => {
          
          {/* Géneros */}
          <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-hide">
-             {["Todos", "Rock", "Pop", "Indie", "Metal", "Jazz", "Electrónica", "Urbano", "Clásica"].map(genre => (
+             {["Todos", "Rock", "Pop Rock", "Ballad", "Hard Rock", "Pop", "Indie", "Metal", "Jazz", "Electrónica", "Urbano", "Clásica"].map(genre => (
                  <button 
                     key={genre}
                     onClick={() => setSelectedGenre(genre)}
