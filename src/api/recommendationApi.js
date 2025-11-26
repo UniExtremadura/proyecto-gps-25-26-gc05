@@ -24,36 +24,21 @@ export const getTopTracks = async () => {
 };
 
 /**
- * Obtiene recomendaciones basadas en el género favorito reciente.
- * Endpoint: GET /recommendations/users/{idUser}/recommended-tracks/genre
- * @param {number} userId - ID del usuario
+ * Obtiene recomendaciones personalizadas para un usuario.
+ * Endpoint: GET /recommendations/users/{idUser}/recommended-tracks?type=...
+ * @param {number} userId - ID del usuario (BIGINT/Long)
+ * @param {string} type - Tipo de filtro: 'genre', 'like', 'subscription'
  */
-export const getRecommendedTracksByGenre = async (userId) => {
+export const getRecommendedTracks = async (userId, type) => {
     try {
-        const response = await recommendationApi.get(`/recommendations/users/${userId}/recommended-tracks/genre`);
+        const params = { type };
+        const response = await recommendationApi.get(`/recommendations/users/${userId}/recommended-tracks`, { params });
         return response.data;
     } catch (error) {
-        console.error(`Error al obtener recomendaciones por GÉNERO para usuario ${userId}:`, error);
+        console.error(`Error al obtener recomendaciones (${type}):`, error);
         return [];
     }
 };
-
-/**
- * Obtiene recomendaciones basadas en filtrado colaborativo (Likes).
- * Endpoint: GET /recommendations/users/{idUser}/recommended-tracks/like
- * @param {number} userId - ID del usuario
- */
-export const getRecommendedTracksByLike = async (userId) => {
-    try {
-        const response = await recommendationApi.get(`/recommendations/users/${userId}/recommended-tracks/like`);
-        return response.data;
-    } catch (error) {
-        console.error(`Error al obtener recomendaciones por LIKE para usuario ${userId}:`, error);
-        return [];
-    }
-};
-
-// --------------------------------------------------------------------------
 
 /**
  * Obtiene el top de canciones de un artista específico.
