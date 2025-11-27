@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getAlbums, getArtists, getTracks } from "../api/contentApi";
 import { useCart } from "../contexts/CartContext"; 
-import { Search, Disc, Mic, Loader, AlertCircle } from 'lucide-react';
+import { Search, Disc, Mic, Loader, AlertCircle, Filter } from 'lucide-react';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -33,10 +33,7 @@ const AlbumDetailPanel = ({ album, artistName, tracks, onAddToCart }) => {
     if (!album) return <div className="h-full flex items-center justify-center text-zinc-500 border border-dashed border-zinc-800 rounded-2xl p-10">Selecciona un álbum para ver detalles</div>;
 
     return (
-        // CAMBIO 1: Aumentamos la altura máxima (de 220px a 200px restados)
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden sticky top-48 shadow-2xl max-h-[calc(100vh-200px)] flex flex-col">
-            
-            {/* CAMBIO 2: Imagen más alta (de h-48 a h-64 o h-72) */}
             <div className="relative h-72 bg-zinc-800 flex-shrink-0">
                 <img 
                     src={album.cover_url || 'https://placehold.co/300x300?text=No+Cover'} 
@@ -92,7 +89,9 @@ function MarketPlace() {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   
+  // --- FILTROS ---
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState("album"); // 'album' o 'artist'
   const [selectedGenre, setSelectedGenre] = useState(initialCategory);
   
   const [selectedAlbum, setSelectedAlbum] = useState(null);
@@ -122,7 +121,7 @@ function MarketPlace() {
     const fetchAlbums = async () => {
       setLoading(true);
       try {
-        const newAlbums = await getAlbums(page, 8, searchQuery, selectedGenre);
+        const newAlbums = await getAlbums(page, 8, searchQuery, searchType, selectedGenre);
         
         if (isMounted) {
             const isNewFilter = page === 0;
@@ -146,7 +145,7 @@ function MarketPlace() {
     fetchAlbums();
 
     return () => { isMounted = false; };
-  }, [page, searchQuery, selectedGenre]);
+  }, [page, searchQuery, searchType, selectedGenre]);
 
   const handleSearch = (e) => {
       setSearchQuery(e.target.value);
@@ -187,26 +186,52 @@ function MarketPlace() {
       {/* Navbar de Filtros */}
       <div className="sticky top-20 z-40 bg-black/90 backdrop-blur-md border-b border-zinc-800 py-4 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full md:w-96 group">
-                <Search className="absolute left-3 top-2.5 w-5 h-5 text-zinc-500 group-focus-within:text-emerald-500" />
-                <input 
-                    type="text" 
-                    placeholder="Buscar por título..." 
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:border-emerald-500 transition-colors text-white"
-                    value={searchQuery}
-                    onChange={handleSearch}
-                />
+            
+            {/* --- BUSCADOR MODIFICADO (Solo Álbum y Artista) --- */}
+            <div className="relative w-full md:w-[600px] flex gap-2 items-center bg-zinc-900 rounded-full border border-zinc-700 p-1 focus-within:border-emerald-500 transition-colors">
+                
+            {/* Selector de Tipo */}
+                <div className="relative border-r border-zinc-700">
+                    <select 
+                        value={searchType}
+                        onChange={(e) => {
+                            setSearchType(e.target.value);
+                            setPage(0);
+                        }}
+                        // Clases actualizadas: bg-transparent (para el input cerrado) y text-white
+                        className="appearance-none bg-transparent text-zinc-300 text-sm font-medium py-2 pl-4 pr-8 focus:outline-none cursor-pointer hover:text-white transition-colors"
+                    >
+                        {/* Opciones con fondo oscuro para que se vean bien en el desplegable */}
+                        <option value="album" className="bg-zinc-900 text-white">Álbum</option>
+                        <option value="artist" className="bg-zinc-900 text-white">Artista</option>
+                    </select>
+                    {/* Icono de filtro */}
+                    <Filter className="absolute right-2 top-2.5 w-3 h-3 text-zinc-500 pointer-events-none" />
+                </div>
+
+                {/* Input de Texto */}
+                <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-2.5 w-5 h-5 text-zinc-500" />
+                    <input 
+                        type="text" 
+                        placeholder={`Buscar por ${searchType === 'artist' ? 'artista' : 'título'}...`} 
+                        className="w-full bg-transparent border-none py-2 pl-10 pr-4 focus:ring-0 text-white placeholder:text-zinc-600 outline-none"
+                        value={searchQuery}
+                        onChange={handleSearch}
+                    />
+                </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+            {/* --- LISTA DE GÉNEROS --- */}
+            <div className="flex gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-hide max-w-full md:max-w-[60%] items-center">
                 {["Todas", "Rock", "Pop Rock", "Ballad", "Hard Rock", "Pop", "Indie", "Metal", "Jazz", "Electrónica", "Urbano", "Clásica"].map(cat => (
                     <button 
                         key={cat}
                         onClick={() => handleCategoryClick(cat)}
-                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                        className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap border ${
                             (selectedGenre === cat || (cat === 'Todas' && !selectedGenre)) 
-                            ? "bg-emerald-600 text-white" 
-                            : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                            ? "bg-emerald-500 text-black border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]" 
+                            : "bg-transparent border-zinc-700 text-zinc-400 hover:border-emerald-400 hover:text-emerald-400 hover:bg-zinc-800/50"
                         }`}
                     >
                         {cat}
@@ -227,7 +252,7 @@ function MarketPlace() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* Lista de Álbumes (Scrollable) */}
+            {/* Lista de Álbumes */}
             <div className="lg:col-span-8">
                 <div className="flex items-center gap-2 mb-6">
                     <Disc className="text-emerald-500" />
@@ -270,9 +295,8 @@ function MarketPlace() {
                 </div>
             </div>
 
-            {/* Panel de Detalle (Sticky y con scroll interno) */}
+            {/* Panel de Detalle */}
             <div className="hidden lg:block lg:col-span-4 h-full">
-                {/* Contenedor padre para asegurar que el sticky tiene espacio para deslizarse */}
                 <div className="sticky top-48">
                     <AlbumDetailPanel 
                         album={selectedAlbum}
