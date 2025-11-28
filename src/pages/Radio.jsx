@@ -49,34 +49,93 @@ const CheckoutPage = () => {
       setNewCard({ ...newCard, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsProcessing(true);
+  const goToArtistProfile = (albumId) => {
+     if (!albumId || albums.length === 0) return;
+     
+     // Buscamos el álbum para sacar el ID del artista
+     const album = albums.find(a => String(a.id) === String(albumId));
+     
+     if (album) {
+         const realArtistId = album.artistId || album.artist_id;
+         if (realArtistId) {
+             navigate(`/artist/${realArtistId}`);
+         }
+     }
+  };
+
+  // --- LÓGICA DE FILTRADO ---
+  const getFilteredPlaylist = () => {
+      return playlist.filter(track => {
+          const artistName = getArtistName(track.albumId || track.album_id).toLowerCase();
+          const title = track.title ? track.title.toLowerCase() : "";
+          const query = searchQuery.toLowerCase();
+          const matchesSearch = title.includes(query) || artistName.includes(query);
+
+          const matchesGenre = selectedGenre === "Todos" || 
+                               (track.genre && track.genre.toLowerCase() === selectedGenre.toLowerCase());
+
+          return matchesSearch && matchesGenre;
+      });
+  };
+
+  const filteredTracks = getFilteredPlaylist();
+
+  // --- HANDLERS ---
+  const handleTrackClick = (track) => {
+      const originalIndex = playlist.findIndex(t => t.id === track.id);
+      if (originalIndex !== -1) {
+          setCurrentTrackIndex(originalIndex);
+          setIsPlaying(true);
+      }
+  };
+
+const handleLike = async () => {
+    // 1. Validación de seguridad
+    if (!user?.userId) {
+      alert("Debes iniciar sesión para dar Like ❤️");
+      return;
+    }
+
+    if (!playlist[currentTrackIndex]) return;
+    const currentTrack = playlist[currentTrackIndex];
+
+    // 2. Si ya está marcado visualmente, no hacemos nada (doble seguridad)
+    if (isLiked) return;
+
+    // 3. Optimistic UI: Lo marcamos INMEDIATAMENTE
+    setIsLiked(true);
 
     try {
-        // 1. Si es tarjeta nueva y quiere guardarla, la mandamos a tu API
-        if (!selectedSavedCard && saveNewCard) {
-            await createPaymentMethod(currentUserId, {
-                provider: newCard.provider,
-                numC: newCard.numC,
-                cadC: newCard.cadC,
-                cvv: newCard.cvv
-            });
-            console.log("💳 Tarjeta guardada en backend para usuario:", currentUserId);
-        }
-
-        // 2. Procesamos el pago (Simulado)
-        setTimeout(() => {
-          clearCart();
-          navigate("/confirmacion");
-        }, 2000);
-
+      await addLike(user.userId, currentTrack.id);
+      console.log(`❤️ Like registrado: ${currentTrack.id}`);
     } catch (error) {
-        console.error("Error en el pago:", error);
-        alert("Hubo un error procesando el pago.");
-        setIsProcessing(false);
+      console.error("El like ya existía o hubo error:", error);
     }
   };
+
+  const handlePlayPause = () => setIsPlaying(!isPlaying);
+
+  const handleNext = () => {
+      setCurrentTrackIndex((prev) => (prev + 1) % playlist.length);
+      setIsPlaying(true);
+  };
+  
+  const handlePrev = () => {
+      setCurrentTrackIndex((prev) => (prev - 1 + playlist.length) % playlist.length);
+      setIsPlaying(true);
+  };
+
+  const handleTimeUpdate = () => {
+      if(audioRef.current && audioRef.current.duration) {
+          setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
+      }
+  };
+
+  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Sintonizando...</div>;
+  if (playlist.length === 0) return <div className="min-h-screen bg-black text-white flex items-center justify-center">No hay canciones disponibles.</div>;
+
+  const currentTrack = playlist[currentTrackIndex];
+  const currentCover = getAlbumCover(currentTrack?.albumId || currentTrack?.album_id) || "https://placehold.co/400x400/10b981/ffffff?text=Vinyl";
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 flex justify-center items-start">
