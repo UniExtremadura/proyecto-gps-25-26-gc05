@@ -11,6 +11,20 @@ const usersApi = axios.create({
   }
 });
 
+
+
+// === Gestión del token JWT ===
+export const setAuthToken = (token) => {
+  if (token) {
+    const clean = token.replace(/^Bearer\s+/i, "");
+    usersApi.defaults.headers.common['Authorization'] = `Bearer ${clean}`;
+    console.log("Token enviado a backend:", `Bearer ${clean}`);
+  } else {
+    delete usersApi.defaults.headers.common['Authorization'];
+  }
+};
+
+
 /* ========= AUTH ========= */
 
 export const registerUser = async ({ email, password, rol, recaptchaToken }) => {
@@ -60,6 +74,7 @@ export const loginUser = async ({ email, password, recaptchaToken }) => {
   return { userId, success: true };
 };
 
+
 export const logoutUser = async () => {
   try {
     const res = await usersApi.post('/users/auth/logout');
@@ -73,23 +88,31 @@ export const logoutUser = async () => {
 /* ========= PERFIL ========= */
 
 export const getUserProfile = async (userId) => {
-  console.log("Intentando obtener perfil para ID:", userId); // <--- ¿Qué imprime esto?
+  console.log("GET PROFILE → userId:", userId);
+
   try {
     const res = await usersApi.get(`/users/${userId}/profile`);
+    console.log("RESPUESTA PERFIL:", res);
     return res.data;
   } catch (err) {
-    // Imprimimos el status y los datos para ver el error real
-    console.error("❌ ERROR STATUS:", err.response?.status);
-    console.error("❌ ERROR DATA:", err.response?.data);
+    console.error("ERROR GET PROFILE:", err.response || err);
+
     throw err;
   }
 };
 
-export const updateUserProfile = async (userId, { displayName, avatarUrl, bio }) => {
-  const body = { displayName, avatarUrl, bio };
-  const res = await usersApi.patch(`/users/${userId}/profile`, body);
+
+export const updateUserProfile = async (userId, form) => {
+  const body = {
+    display_name: form.displayName,
+    avatar_url: form.avatarUrl,
+    bio: form.bio
+  };
+
+  const res = await usersApi.patch(`/users/${userId}`, body);
   return res.status === 200;
 };
+
 
 /* ========= MÉTODOS DE PAGO ========= */
 

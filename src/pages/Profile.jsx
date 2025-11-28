@@ -23,8 +23,8 @@ const Profile = () => {
 
         // precargar formulario
         setForm({
-          displayName: data.displayName || "",
-          avatarUrl: data.avatarUrl || "",
+          displayName: data.displayName || data.display_name || "",
+          avatarUrl: data.avatarUrl || data.avatar_url || "",
           bio: data.bio || ""
         });
 
@@ -61,7 +61,7 @@ const Profile = () => {
         {/* Avatar */}
         <div className="flex justify-center mb-6">
           <img
-            src={profile.avatarUrl || "https://i.pravatar.cc/150"}
+            src={profile.avatarUrl || profile.avatar_url || "https://i.pinimg.com/236x/bc/8f/29/bc8f29c4183345bcc63bd4a161e88c71.jpg"}
             alt="avatar"
             className="w-40 h-40 rounded-full object-cover shadow-md"
           />
@@ -70,7 +70,7 @@ const Profile = () => {
         {/* Datos */}
         <div className="text-center mb-6">
           <h2 className="text-2xl font-semibold">
-            {profile.displayName || "Nombre no definido"}
+            {profile.displayName || profile.display_name || "Nombre no definido"}
           </h2>
           <p className="text-gray-600 mt-2">
             {profile.bio || "Sin biografía"}
