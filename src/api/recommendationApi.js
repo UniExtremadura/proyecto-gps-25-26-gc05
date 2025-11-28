@@ -3,6 +3,7 @@ import axios from 'axios';
 // Instancia para el Microservicio de Recomendaciones (Python - Puerto 8080)
 const recommendationApi = axios.create({
     baseURL: 'http://localhost:8082', 
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -24,32 +25,28 @@ export const getTopTracks = async () => {
 };
 
 /**
- * Obtiene recomendaciones basadas en el género favorito reciente.
- * Endpoint: GET /recommendations/users/{idUser}/recommended-tracks/genre
- * @param {number} userId - ID del usuario
+ * NUEVO: Ya no recibe userId.
+ * Llama a /my/genre y el backend averigua el usuario por la cookie.
  */
-export const getRecommendedTracksByGenre = async (userId) => {
+export const getRecommendedTracksByGenre = async () => { // <--- Sin parámetros
     try {
-        // Ya no enviamos params, la ruta define la lógica
-        const response = await recommendationApi.get(`/recommendations/users/${userId}/recommended-tracks/genre`);
+        const response = await recommendationApi.get('/recommendations/my/genre');
         return response.data;
     } catch (error) {
-        console.error(`Error al obtener recomendaciones por GÉNERO para usuario ${userId}:`, error);
+        console.error("Error recomendaciones género:", error);
         return [];
     }
 };
 
 /**
- * Obtiene recomendaciones basadas en filtrado colaborativo (Likes).
- * Endpoint: GET /recommendations/users/{idUser}/recommended-tracks/like
- * @param {number} userId - ID del usuario
+ * NUEVO: Ya no recibe userId.
  */
-export const getRecommendedTracksByLike = async (userId) => {
+export const getRecommendedTracksByLike = async () => { // <--- Sin parámetros
     try {
-        const response = await recommendationApi.get(`/recommendations/users/${userId}/recommended-tracks/like`);
+        const response = await recommendationApi.get('/recommendations/my/likes');
         return response.data;
     } catch (error) {
-        console.error(`Error al obtener recomendaciones por LIKE para usuario ${userId}:`, error);
+        console.error("Error recomendaciones likes:", error);
         return [];
     }
 };

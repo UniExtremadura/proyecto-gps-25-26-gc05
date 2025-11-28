@@ -1,59 +1,55 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { setAuthToken } from '../api/usersApi';
+// CORRECCIÓN 1: Eliminamos setAuthToken y traemos logoutUser
+import { logoutUser } from '../api/usersApi';
 
 const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
-  const [token, setToken] = useState(null);
+  // Eliminamos el estado 'token', ya no lo manejamos en JS
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('authToken');
+    // CORRECCIÓN 2: Al cargar, solo buscamos el userId para restaurar la sesión visual.
+    // Ya no buscamos 'authToken' en localStorage.
     const savedUserId = localStorage.getItem('userId');
 
-    if (savedToken && savedUserId) {
-      Promise.resolve().then(() => {
-        const clean = savedToken.replace(/^Bearer\s+/i, "");
-        setAuthToken(clean);
-        setToken(clean);
-        setUserId(savedUserId);
-      });
+    if (savedUserId) {
+       setUserId(savedUserId);
     }
   }, []);
 
-  const login = ({ token, userId }) => {
-    const cleanToken = token.replace(/^Bearer\s+/i, "");
-
-    setToken(cleanToken);
-    setUserId(userId);
-    setAuthToken(cleanToken);
-
-    localStorage.setItem('authToken', cleanToken);
-    localStorage.setItem('userId', userId);
+  // La función login ahora recibe solo el objeto con userId (o lo que mande tu loginUser)
+  const login = (userData) => {
+    const id = userData.userId || userData.id; // Nos aseguramos de tener el ID
+    
+    setUserId(id);
+    localStorage.setItem('userId', id);
+    
+    // CORRECCIÓN 3: Eliminadas las llamadas a setToken y setAuthToken
   };
 
+  const logout = async () => {
+    // CORRECCIÓN 4: Avisamos al backend para que borre la cookie
+    try {
+        await logoutUser();
+    } catch (error) {
+        console.error("Error avisando al backend del logout", error);
+    }
 
-  const logout = () => {
-    setToken(null);
+    // Limpiamos el estado local
     setUserId(null);
-    setAuthToken(null);
-
-    localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
+    // localStorage.removeItem('authToken'); // Ya no existe, no hace falta borrarlo
   };
 
   return (
     <UserContext.Provider
       value={{
-        user: token
-          ? {
-              token,
-              userId
-            }
-          : null,
+        // El objeto user ahora solo tiene lo que podemos ver (userId)
+        user: userId ? { userId } : null,
         login,
         logout,
-        isAuthenticated: !!token
+        isAuthenticated: Boolean(userId)
       }}
     >
       {children}

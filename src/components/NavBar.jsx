@@ -11,7 +11,7 @@ const NavBar = () => {
   const [language, setLanguage] = useState("ES");
   
  
-  const { user, logout } = useUser();
+  const { user, logout, isAuthenticated } = useUser();
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -98,7 +98,7 @@ const NavBar = () => {
 
           {/* Botones de Auth */}
           <div className="hidden md:flex items-center gap-2 ml-2">
-            {user?.token ? (
+            {isAuthenticated ? (
               <>
                 <Link to="/profile">
                   <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
