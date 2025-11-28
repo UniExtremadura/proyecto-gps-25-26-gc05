@@ -3,11 +3,12 @@ import { getTracks, getArtists, getAlbums } from "../api/contentApi";
 import { addLike, registerPlay } from "../api/usersApi"; // <--- IMPORTANTE: Añadido registerPlay
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, ListMusic, Heart, Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-// ID consistente con tu base de datos para que las métricas funcionen
-const CURRENT_USER_ID = 1001; 
+import { useUser } from "../contexts/UserContext";
 
 const Radio = () => {
+
+  // Obtener el usuario del contexto
+  const { user } = useUser();
   // --- ESTADOS DE DATOS ---
   const [playlist, setPlaylist] = useState([]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
@@ -68,9 +69,9 @@ const Radio = () => {
                     // <--- AQUÍ ESTÁ EL CAMBIO CLAVE ---
                     // Registramos el play en el backend cuando empieza a sonar
                     const track = playlist[currentTrackIndex];
-                    if (track) {
-                        // Llamada asíncrona (no esperamos respuesta para no bloquear)
-                        registerPlay(CURRENT_USER_ID, track.id);
+                    if (track && user?.userId) {
+                        // registerPlay usa la cookie automáticamente gracias a usersApi.js
+                        registerPlay(user.userId, track.id);
                     }
                 })
                 .catch(error => console.warn("Auto-play prevenido:", error));
@@ -79,7 +80,7 @@ const Radio = () => {
         audioRef.current.pause();
       }
     }
-  }, [currentTrackIndex, isPlaying, playlist]); // Dependencias
+  }, [currentTrackIndex, isPlaying, playlist, user]); // Dependencias
 
   // 3. Resetear Like visual al cambiar canción
   useEffect(() => { setIsLiked(false); }, [currentTrackIndex]);
@@ -141,31 +142,28 @@ const Radio = () => {
       }
   };
 
-// ... dentro de Radio.jsx
+    const handleLike = async () => {
+        // <--- CAMBIO 4: Validación de seguridad
+        if (!user?.userId) {
+            alert("Debes iniciar sesión para dar Like ❤️");
+            // Opcional: navigate('/login');
+            return;
+        }
 
-const handleLike = async () => {
-  if (!playlist[currentTrackIndex]) return;
-  const currentTrack = playlist[currentTrackIndex];
-
-  // AÑADIR ESTA GUARDIA: Si ya le dimos like (isLiked es true), salimos.
-  if (isLiked) {
-    console.log(`❌ Ya le diste like a esta canción: ${currentTrack.id}`);
-    return; 
-  }
-
-  // Optimistic UI: Marcamos el like inmediatamente
-  // Esto hace que el corazón se rellene al instante
-  setIsLiked(true);
-  
-  try {
-    // Usamos el ID real (1001) y Long para el track
-    await addLike(CURRENT_USER_ID, currentTrack.id);
-    console.log(`❤️ Like registrado: ${currentTrack.id}`);
-  } catch (error) {
-    console.error("Error like:", error);
-    setIsLiked(false); // Revertimos si la API falla
-  }
-};
+        if (!playlist[currentTrackIndex]) return;
+        const currentTrack = playlist[currentTrackIndex];
+        
+        setIsLiked(true);
+        
+        try {
+        // Usamos el ID dinámico del contexto
+        await addLike(user.userId, currentTrack.id);
+        console.log(`❤️ Like registrado: ${currentTrack.id}`);
+        } catch (error) {
+        console.error("Error like:", error);
+        setIsLiked(false);
+        }
+    };
 
   const handlePlayPause = () => setIsPlaying(!isPlaying);
 
@@ -193,6 +191,7 @@ const handleLike = async () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex flex-col items-center py-10 px-4">
+      {/* ... (Todo tu JSX visual se mantiene igual) ... */}
       
       {/* HEADER */}
       <div className="text-center mb-8 animate-fade-in">
@@ -201,9 +200,8 @@ const handleLike = async () => {
         </h1>
       </div>
 
-      {/* REPRODUCTOR */}
+      {/* REPRODUCTOR (Mismo código visual) */}
       <div className="w-full max-w-4xl bg-zinc-900/80 backdrop-blur-md rounded-3xl border border-zinc-800 p-8 shadow-2xl flex flex-col md:flex-row gap-10 items-center mb-8">
-        {/* Disco */}
         <div className="relative w-64 h-64 flex-shrink-0">
            <div className={`w-full h-full rounded-full border-4 border-zinc-800 overflow-hidden shadow-xl relative ${isPlaying ? 'animate-spin-slow' : ''}`} style={{ animationDuration: '10s' }}>
               <img 
@@ -215,7 +213,6 @@ const handleLike = async () => {
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-zinc-900 rounded-full border-2 border-zinc-700"></div>
            </div>
         </div>
-        {/* Controles */}
         <div className="flex-1 w-full flex flex-col justify-center">
             <div className="text-center md:text-left mb-6">
                 <h2 className="text-3xl font-bold text-white truncate">{currentTrack?.title}</h2>
@@ -228,7 +225,6 @@ const handleLike = async () => {
                 </p>
                 <span className="inline-block mt-2 px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">{currentTrack?.genre || "Sin género"}</span>
             </div>
-            {/* Barra */}
             <div className="mb-6">
                 <div className="w-full bg-zinc-700 rounded-full h-2 mb-2 cursor-pointer relative"
                      onClick={(e) => {
@@ -239,7 +235,6 @@ const handleLike = async () => {
                     <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
                 </div>
             </div>
-            {/* Botones */}
             <div className="flex items-center justify-center md:justify-start gap-6">
                 <button onClick={handlePrev} className="text-zinc-400 hover:text-white"><SkipBack size={32}/></button>
                 <button onClick={handlePlayPause} className="w-16 h-16 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105">
@@ -265,7 +260,6 @@ const handleLike = async () => {
                         fill={isLiked ? "currentColor" : "none"} 
                     />
                 </button>
-                {/* Volumen */}
                 <div className="flex items-center gap-2 ml-auto group">
                     <button onClick={() => setVolume(v => v === 0 ? 0.5 : 0)} className="text-zinc-400 group-hover:text-white">
                         {volume === 0 ? <VolumeX size={20}/> : <Volume2 size={20}/>}
@@ -278,7 +272,6 @@ const handleLike = async () => {
 
       {/* --- BARRA DE FILTROS --- */}
       <div className="w-full max-w-4xl mb-6 flex flex-col md:flex-row gap-4 justify-between items-center bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
-         {/* Buscador */}
          <div className="relative w-full md:w-1/2 group">
             <Search className="absolute left-3 top-2.5 w-5 h-5 text-zinc-500 group-focus-within:text-emerald-500" />
             <input 
@@ -294,8 +287,6 @@ const handleLike = async () => {
                 </button>
             )}
          </div>
-         
-         {/* Géneros */}
          <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-hide">
              {["Todos", "Rock", "Pop Rock", "Ballad", "Hard Rock", "Pop", "Indie", "Metal", "Jazz", "Electrónica", "Urbano", "Clásica"].map(genre => (
                  <button 
