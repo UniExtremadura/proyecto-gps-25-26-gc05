@@ -12,6 +12,7 @@ import Recommendations from './pages/Recommendations';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import ArtistPage from './pages/ArtistPage';
 
 
 // Páginas
@@ -32,6 +33,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/marketplace" element={<MarketPlace />} />
+              <Route path="/artist/:id" element={<ArtistPage />} />
               <Route path="/newsletter" element={<NewsLetter />} />
               <Route path="/radio" element={<Radio />} />
               <Route path="/descubrir" element={<Recommendations />} />

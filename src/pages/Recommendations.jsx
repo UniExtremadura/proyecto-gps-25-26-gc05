@@ -5,10 +5,12 @@ import GenericCarousel from "../components/GenericCarousel";
 import { motion } from "framer-motion";
 
 // Importamos nuestra nueva API
-import { getTopTracks, getRecommendedTracks } from "../api/recommendationApi";
-
-// ID de usuario hardcodeado para pruebas (Coincide con tu SQL: 1001)
-const CURRENT_USER_ID = 1001;
+// Borra la línea anterior de 'recommendationApi' y pon esta:
+import { 
+  getTopTracks, 
+  getRecommendedTracksByGenre, 
+  getRecommendedTracksByLike 
+} from "../api/recommendationApi";
 
 const Recommendations = () => {
   const navigate = useNavigate();
@@ -19,32 +21,38 @@ const Recommendations = () => {
   const [genreRecommendations, setGenreRecommendations] = useState([]);
   const [likeRecommendations, setLikeRecommendations] = useState([]);
 
-  useEffect(() => {
+useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // 1. Cargar Top Global (Métricas puras)
+        // 1. Top Global (Público)
         const topData = await getTopTracks();
         setTrendingTracks(mapTracksToCarousel(topData, "Éxito Global"));
 
-        // 2. Cargar Recomendaciones por Género
-        const genreData = await getRecommendedTracks(CURRENT_USER_ID, 'genre');
+        // 2. Por Género (Privado - Usa Cookie)
+        // CAMBIO: Llamada sin argumentos
+        const genreData = await getRecommendedTracksByGenre(); 
         setGenreRecommendations(mapTracksToCarousel(genreData, "Tu estilo favorito"));
 
-        // 3. Cargar Recomendaciones por Likes (Colaborativo)
-        const likeData = await getRecommendedTracks(CURRENT_USER_ID, 'like');
+        // 3. Por Likes (Privado - Usa Cookie)
+        // CAMBIO: Llamada sin argumentos
+        const likeData = await getRecommendedTracksByLike();
         setLikeRecommendations(mapTracksToCarousel(likeData, "Basado en tus likes"));
 
       } catch (error) {
         console.error("Error cargando recomendaciones:", error);
+        // Si el backend devuelve 401 (no hay cookie o expiró), mandamos al login
+        if (error.response && error.response.status === 401) {
+             navigate('/login');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [navigate]); // Añadir navigate a dependencias es buena práctica
 
   // --- HELPER: Transformar datos de API a formato Visual ---
   const mapTracksToCarousel = (tracks, subtitleDefault) => {

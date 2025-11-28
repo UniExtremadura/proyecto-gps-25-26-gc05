@@ -3,6 +3,7 @@ import axios from 'axios';
 // Instancia para el Microservicio de Recomendaciones (Python - Puerto 8080)
 const recommendationApi = axios.create({
     baseURL: 'http://localhost:8082', 
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -24,21 +25,33 @@ export const getTopTracks = async () => {
 };
 
 /**
- * Obtiene recomendaciones personalizadas para un usuario.
- * Endpoint: GET /recommendations/users/{idUser}/recommended-tracks?type=...
- * @param {number} userId - ID del usuario (BIGINT/Long)
- * @param {string} type - Tipo de filtro: 'genre', 'like', 'subscription'
+ * NUEVO: Ya no recibe userId.
+ * Llama a /my/genre y el backend averigua el usuario por la cookie.
  */
-export const getRecommendedTracks = async (userId, type) => {
+export const getRecommendedTracksByGenre = async () => { // <--- Sin parámetros
     try {
-        const params = { type };
-        const response = await recommendationApi.get(`/recommendations/users/${userId}/recommended-tracks`, { params });
+        const response = await recommendationApi.get('/recommendations/my/genre');
         return response.data;
     } catch (error) {
-        console.error(`Error al obtener recomendaciones (${type}):`, error);
+        console.error("Error recomendaciones género:", error);
         return [];
     }
 };
+
+/**
+ * NUEVO: Ya no recibe userId.
+ */
+export const getRecommendedTracksByLike = async () => { // <--- Sin parámetros
+    try {
+        const response = await recommendationApi.get('/recommendations/my/likes');
+        return response.data;
+    } catch (error) {
+        console.error("Error recomendaciones likes:", error);
+        return [];
+    }
+};
+
+// --------------------------------------------------------------------------
 
 /**
  * Obtiene el top de canciones de un artista específico.

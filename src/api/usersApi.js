@@ -3,11 +3,15 @@ import axios from 'axios';
 // Instancia para el Microservicio de Usuarios (Puerto 8080)
 const usersApi = axios.create({
   baseURL: 'http://localhost:8080',
+  // CORRECCIÓN 1: withCredentials va AQUÍ, no dentro de headers
+  withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
 });
+
+
 
 // === Gestión del token JWT ===
 export const setAuthToken = (token) => {
@@ -21,7 +25,6 @@ export const setAuthToken = (token) => {
 };
 
 
-
 /* ========= AUTH ========= */
 
 export const registerUser = async ({ email, password, rol, recaptchaToken }) => {
@@ -32,7 +35,7 @@ export const registerUser = async ({ email, password, rol, recaptchaToken }) => 
     recaptchaToken
   };
 
-  const res = await usersApi.post(
+  await usersApi.post(
     '/users/auth/register',
     body,
     {
@@ -45,9 +48,7 @@ export const registerUser = async ({ email, password, rol, recaptchaToken }) => 
   return true;
 };
 
-
 export const loginUser = async ({ email, password, recaptchaToken }) => {
-
   const headers = {};
 
   // Solo añadimos reCAPTCHA si realmente existe Y NO es null
@@ -61,23 +62,27 @@ export const loginUser = async ({ email, password, recaptchaToken }) => {
     { headers }
   );
 
-  const tokenRaw = res.headers["authorization"] || res.headers["Authorization"];
+  // CORRECCIÓN 2: Ya no leemos el token (está oculto en la cookie)
+  // Solo leemos el ID para saber que el login fue exitoso y quién es el usuario.
   const userId = res.headers["x-user-id"] || res.headers["X-User-Id"];
 
-  if (!tokenRaw || !userId) throw new Error("No token o userId");
+  if (!userId) {
+      throw new Error("Login incompleto: El servidor no devolvió ID de usuario.");
+  }
 
-  const token = tokenRaw.startsWith("Bearer ")
-    ? tokenRaw.substring(7)
-    : tokenRaw;
-
-  return { token, userId };
+  // Devolvemos solo el ID. El token ya está guardado en el navegador.
+  return { userId, success: true };
 };
 
 
-
 export const logoutUser = async () => {
-  const res = await usersApi.post('/users/auth/logout');
-  return res.status === 200;
+  try {
+    const res = await usersApi.post('/users/auth/logout');
+    return res.status === 200;
+  } catch (error) {
+    console.error("Error en logout:", error);
+    return false;
+  }
 };
 
 /* ========= PERFIL ========= */
@@ -91,6 +96,7 @@ export const getUserProfile = async (userId) => {
     return res.data;
   } catch (err) {
     console.error("ERROR GET PROFILE:", err.response || err);
+
     throw err;
   }
 };
@@ -129,7 +135,7 @@ export const deletePaymentMethod = async (userId, paymentMethodId) => {
 /* ========= LIKES / SUSCRIPCIONES / PLAYS ========= */
 
 export const addLike = async (userId, trackId) => {
-  const body = { idTrack: String(trackId) };
+  const body = { idUser: String(userId), idTrack: String(trackId) };
   const res = await usersApi.post(`/users/${userId}/likes`, body);
   return res.status === 201;
 };
@@ -156,8 +162,10 @@ export const deleteSubscription = async (userId, artistId) => {
 };
 
 export const registerPlay = async (userId, trackId) => {
+  // console.log("📡 REGISTER PLAY → userId:", userId, "trackId:", trackId);
   const body = { idTrack: String(trackId) };
-  const res = await usersApi.post(`/users/${userId}/plays`, body);
+  // Nota: Como 'usersApi' tiene withCredentials: true, la cookie viaja aquí automáticamente
+  const res = await usersApi.post(`/users/${userId}/play`, body);
   return res.status === 201;
 };
 
