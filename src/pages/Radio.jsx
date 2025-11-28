@@ -5,7 +5,7 @@ import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, ListMusic,
 import { useNavigate } from "react-router-dom";
 
 // ID consistente con tu base de datos para que las métricas funcionen
-const CURRENT_USER_ID = 1001; 
+const CURRENT_USER_ID = 1002; 
 
 const Radio = () => {
   // --- ESTADOS DE DATOS ---
@@ -40,7 +40,7 @@ const Radio = () => {
         
         const validTracks = tracksData.map(t => ({
             ...t,
-            fileUrl: t.fileUrl || t.file_url || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+            fileUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
         }));
         
         setPlaylist(validTracks);

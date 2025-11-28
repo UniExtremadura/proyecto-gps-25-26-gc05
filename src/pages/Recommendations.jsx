@@ -4,42 +4,52 @@ import { Sparkles, TrendingUp, Headphones, Star, AlertCircle } from "lucide-reac
 import GenericCarousel from "../components/GenericCarousel";
 import { motion } from "framer-motion";
 
-// Importamos nuestra nueva API
-// Borra la línea anterior de 'recommendationApi' y pon esta:
+// Importamos la API de recomendaciones Y la de contenidos (para los álbumes)
 import { 
   getTopTracks, 
   getRecommendedTracksByGenre, 
   getRecommendedTracksByLike 
 } from "../api/recommendationApi";
+import { getAlbums } from "../api/contentApi"; // <--- NUEVO IMPORT
 
-// ID de usuario hardcodeado para pruebas (Coincide con tu SQL: 1001)
+// ID de usuario hardcodeado para pruebas
 const CURRENT_USER_ID = 1001;
 
 const Recommendations = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
-  // Estados para almacenar las listas de canciones
+  // Estados para almacenar las listas
   const [trendingTracks, setTrendingTracks] = useState([]);
   const [genreRecommendations, setGenreRecommendations] = useState([]);
   const [likeRecommendations, setLikeRecommendations] = useState([]);
+  
+  // NUEVO: Estado para guardar los álbumes (para sacar las fotos)
+  const [albums, setAlbums] = useState([]);
 
-useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // 1. Cargar Top Global
-        const topData = await getTopTracks();
-        setTrendingTracks(mapTracksToCarousel(topData, "Éxito Global"));
+        // 1. Cargar Álbumes (para tener las carátulas disponibles)
+        // Pedimos una página grande (1000) para tenerlos todos
+        const albumsData = await getAlbums(0, 1000);
+        setAlbums(albumsData);
 
-        // 2. Cargar Recomendaciones por Género 
-        const genreData = await getRecommendedTracksByGenre(CURRENT_USER_ID);
-        setGenreRecommendations(mapTracksToCarousel(genreData, "Tu estilo favorito"));
+        // 2. Cargar Recomendaciones (en paralelo para ir rápido)
+        const [topData, genreData, likeData] = await Promise.all([
+            getTopTracks(),
+            getRecommendedTracksByGenre(CURRENT_USER_ID),
+            getRecommendedTracksByLike(CURRENT_USER_ID)
+        ]);
 
-        // 3. Cargar Recomendaciones por Likes 
-        const likeData = await getRecommendedTracksByLike(CURRENT_USER_ID);
-        setLikeRecommendations(mapTracksToCarousel(likeData, "Basado en tus likes"));
+        // 3. Mapear datos usando la lista de álbumes recién cargada
+        // Nota: Pasamos 'albumsData' directamente a la función porque el estado 'albums' 
+        // aún no se habrá actualizado dentro de este ciclo del useEffect.
+        setTrendingTracks(mapTracksToCarousel(topData, "Éxito Global", albumsData));
+        setGenreRecommendations(mapTracksToCarousel(genreData, "Tu estilo favorito", albumsData));
+        setLikeRecommendations(mapTracksToCarousel(likeData, "Basado en tus likes", albumsData));
 
       } catch (error) {
         console.error("Error cargando recomendaciones:", error);
@@ -51,25 +61,37 @@ useEffect(() => {
     fetchData();
   }, []);
 
-  // --- HELPER: Transformar datos de API a formato Visual ---
-  const mapTracksToCarousel = (tracks, subtitleDefault) => {
+  // --- HELPER: Obtener Portada ---
+  const getAlbumCover = (albumId, albumsList) => {
+     if (!albumId || !albumsList) return null;
+     const album = albumsList.find(a => String(a.id) === String(albumId));
+     // Prioridad: cover_url (backend) > coverUrl (frontend) > null
+     return album ? (album.cover_url || album.coverUrl) : null;
+  };
+
+  // --- HELPER: Transformar datos ---
+  // Ahora recibe la lista de álbumes para buscar las fotos
+  const mapTracksToCarousel = (tracks, subtitleDefault, albumsList) => {
     if (!tracks || !Array.isArray(tracks)) return [];
 
-    return tracks.map((track) => ({
-      id: track.id,
-      title: track.title || `Track ${track.id}`,
-      // Generamos una imagen bonita basada en el ID para que no salga gris
-      image: `https://picsum.photos/seed/${track.id}/400/400`,
-      description: track.genre 
-        ? `${track.genre} • ${track.plays ? track.plays + ' reprod.' : subtitleDefault}` 
-        : subtitleDefault
-    }));
+    return tracks.map((track) => {
+        // Buscamos la portada real usando el ID del álbum de la canción
+        const realCover = getAlbumCover(track.albumId || track.album_id, albumsList);
+        
+        return {
+          id: track.id,
+          title: track.title || `Track ${track.id}`,
+          // Usamos la portada real, o un placeholder si no existe
+          image: realCover || `https://placehold.co/400x400/222/fff?text=No+Cover`,
+          description: track.genre 
+            ? `${track.genre} • ${track.plays ? track.plays + ' reprod.' : subtitleDefault}` 
+            : subtitleDefault
+        };
+    });
   };
 
   const handleItemClick = (item) => {
-    // Al hacer clic, navegamos al reproductor o al detalle
-    console.log("Click en track:", item.id);
-    // Ajusta esta ruta según tus rutas definidas (ej: /radio, /player, etc)
+    // Al hacer clic, vamos a la radio y tocamos esa canción
     navigate(`/radio?trackId=${item.id}`); 
   };
 

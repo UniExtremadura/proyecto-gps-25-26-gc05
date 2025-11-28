@@ -61,12 +61,4 @@ export const getArtistTracks = async (idArtist) => {
     return response.data;
 };
 
-// (Futuro) Obtener Top 10 canciones de un artista (Microservicio Recomendaciones)
-// Por ahora, simularemos esto en el componente o devolveremos las primeras 10 canciones
-export const getArtistTopTracks = async (idArtist) => {
-    // TODO: Conectar con microservicio de recomendaciones cuando esté listo
-    // Por ahora, reutilizamos getArtistTracks y limitamos en el componente
-    return getArtistTracks(idArtist); 
-};
-
 export default contentApi;

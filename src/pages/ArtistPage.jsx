@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getArtistById, getArtistAlbums, getArtistTopTracks } from '../api/contentApi';
+import { getArtistById, getArtistAlbums } from '../api/contentApi';
+import { getArtistTopTracks } from '../api/recommendationApi';
 import { Disc, Music, User } from 'lucide-react';
 
 const ArtistPage = () => {
@@ -20,9 +21,23 @@ const ArtistPage = () => {
                 const albumsData = await getArtistAlbums(id);
                 setAlbums(albumsData);
 
-                // Simulando Top Tracks
-                const tracksData = await getArtistTopTracks(id);
-                setTopTracks(tracksData.slice(0, 10)); 
+                try {
+                    // 1. Intentamos pedir el Top real a Recomendaciones
+                    const realTopTracks = await getArtistTopTracks(id);
+                    
+                    if (realTopTracks && realTopTracks.length > 0) {
+                        setTopTracks(realTopTracks);
+                    } else {
+                        throw new Error("Sin datos de recomendaciones");
+                    }
+                } catch (recError) {
+                    // 2. Si falla (o está vacío), pedimos las canciones normales a Contenidos como respaldo
+                    console.warn("Usando canciones genéricas como Top Tracks (Recomendaciones no disponibles)");
+                    // Importante: tendrías que importar 'getArtistTracks' de contentApi también para esto
+                    // const fallbackTracks = await getArtistTracks(id);
+                    // setTopTracks(fallbackTracks.slice(0, 5));
+                    setTopTracks([]); // O simplemente lo dejamos vacío
+                }
 
                 setLoading(false);
             } catch (error) {
