@@ -142,28 +142,29 @@ const Radio = () => {
       }
   };
 
-    const handleLike = async () => {
-        // <--- CAMBIO 4: Validación de seguridad
-        if (!user?.userId) {
-            alert("Debes iniciar sesión para dar Like ❤️");
-            // Opcional: navigate('/login');
-            return;
-        }
+const handleLike = async () => {
+    // 1. Validación de seguridad
+    if (!user?.userId) {
+      alert("Debes iniciar sesión para dar Like ❤️");
+      return;
+    }
 
-        if (!playlist[currentTrackIndex]) return;
-        const currentTrack = playlist[currentTrackIndex];
-        
-        setIsLiked(true);
-        
-        try {
-        // Usamos el ID dinámico del contexto
-        await addLike(user.userId, currentTrack.id);
-        console.log(`❤️ Like registrado: ${currentTrack.id}`);
-        } catch (error) {
-        console.error("Error like:", error);
-        setIsLiked(false);
-        }
-    };
+    if (!playlist[currentTrackIndex]) return;
+    const currentTrack = playlist[currentTrackIndex];
+
+    // 2. Si ya está marcado visualmente, no hacemos nada (doble seguridad)
+    if (isLiked) return;
+
+    // 3. Optimistic UI: Lo marcamos INMEDIATAMENTE
+    setIsLiked(true);
+
+    try {
+      await addLike(user.userId, currentTrack.id);
+      console.log(`❤️ Like registrado: ${currentTrack.id}`);
+    } catch (error) {
+      console.error("El like ya existía o hubo error:", error);
+    }
+  };
 
   const handlePlayPause = () => setIsPlaying(!isPlaying);
 
