@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-// Instancia para el Microservicio de Usuarios (Puerto 8080)
 const usersApi = axios.create({
   baseURL: 'http://localhost:8080',
-  // CORRECCIÓN 1: withCredentials va AQUÍ, no dentro de headers
   withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
@@ -51,7 +49,6 @@ export const registerUser = async ({ email, password, rol, recaptchaToken }) => 
 export const loginUser = async ({ email, password, recaptchaToken }) => {
   const headers = {};
 
-  // Solo añadimos reCAPTCHA si realmente existe Y NO es null
   if (recaptchaToken && recaptchaToken !== "null") {
     headers["X-Recaptcha-Token"] = recaptchaToken;
   }
@@ -62,16 +59,14 @@ export const loginUser = async ({ email, password, recaptchaToken }) => {
     { headers }
   );
 
-  // CORRECCIÓN 2: Ya no leemos el token (está oculto en la cookie)
-  // Solo leemos el ID para saber que el login fue exitoso y quién es el usuario.
   const userId = res.headers["x-user-id"] || res.headers["X-User-Id"];
+  const role = res.headers["x-user-role"] || res.headers["X-User-Role"];
 
   if (!userId) {
       throw new Error("Login incompleto: El servidor no devolvió ID de usuario.");
   }
 
-  // Devolvemos solo el ID. El token ya está guardado en el navegador.
-  return { userId, success: true };
+  return { userId, role, success: true };
 };
 
 
@@ -182,7 +177,7 @@ export const deleteSubscription = async (userId, artistId) => {
 };
 
 export const registerPlay = async (userId, trackId) => {
-  // console.log("📡 REGISTER PLAY → userId:", userId, "trackId:", trackId);
+  // console.log("REGISTER PLAY → userId:", userId, "trackId:", trackId);
   const body = { idTrack: String(trackId) };
   // Nota: Como 'usersApi' tiene withCredentials: true, la cookie viaja aquí automáticamente
   const res = await usersApi.post(`/users/${userId}/play`, body);
