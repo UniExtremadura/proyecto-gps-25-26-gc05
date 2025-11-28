@@ -141,22 +141,31 @@ const Radio = () => {
       }
   };
 
-  const handleLike = async () => {
-    if (!playlist[currentTrackIndex]) return;
-    const currentTrack = playlist[currentTrackIndex];
-    
-    // Optimistic UI: Marcamos el like inmediatamente
-    setIsLiked(true);
-    
-    try {
-      // Usamos el ID real (1001) y Long para el track
-      await addLike(CURRENT_USER_ID, currentTrack.id);
-      console.log(`❤️ Like registrado: ${currentTrack.id}`);
-    } catch (error) {
-      console.error("Error like:", error);
-      setIsLiked(false); // Revertimos si falla
-    }
-  };
+// ... dentro de Radio.jsx
+
+const handleLike = async () => {
+  if (!playlist[currentTrackIndex]) return;
+  const currentTrack = playlist[currentTrackIndex];
+
+  // AÑADIR ESTA GUARDIA: Si ya le dimos like (isLiked es true), salimos.
+  if (isLiked) {
+    console.log(`❌ Ya le diste like a esta canción: ${currentTrack.id}`);
+    return; 
+  }
+
+  // Optimistic UI: Marcamos el like inmediatamente
+  // Esto hace que el corazón se rellene al instante
+  setIsLiked(true);
+  
+  try {
+    // Usamos el ID real (1001) y Long para el track
+    await addLike(CURRENT_USER_ID, currentTrack.id);
+    console.log(`❤️ Like registrado: ${currentTrack.id}`);
+  } catch (error) {
+    console.error("Error like:", error);
+    setIsLiked(false); // Revertimos si la API falla
+  }
+};
 
   const handlePlayPause = () => setIsPlaying(!isPlaying);
 
@@ -237,8 +246,24 @@ const Radio = () => {
                     {isPlaying ? <Pause size={32} fill="black" /> : <Play size={32} fill="black" className="ml-1" />}
                 </button>
                 <button onClick={handleNext} className="text-zinc-400 hover:text-white"><SkipForward size={32}/></button>
-                <button onClick={handleLike} className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 ${isLiked ? "bg-red-500 border-red-500 text-white" : "border-zinc-600 hover:bg-white/10"}`}>
-                   <Heart className="w-5 h-5" fill={isLiked ? "currentColor" : "none"} />
+                <button 
+                    onClick={handleLike} 
+                    // ⭐️ CAMBIO CLAVE 1: Deshabilita el botón si ya tiene Like
+                    disabled={isLiked}
+                    className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 
+                        ${isLiked 
+                            // Estilos cuando ya dio like (Corazón relleno, cursor por defecto)
+                            ? "bg-red-500 border-red-500 text-white cursor-default" 
+                            // Estilos cuando NO ha dado like (Permite hover)
+                            : "border-zinc-600 hover:bg-white/10 hover:border-white"
+                        }`}
+                    title={isLiked ? "Ya te gusta esta canción" : "Dar Me Gusta"}
+                >
+                    <Heart 
+                        className="w-5 h-5" 
+                        // ⭐️ CAMBIO CLAVE 2: Mantiene el corazón relleno
+                        fill={isLiked ? "currentColor" : "none"} 
+                    />
                 </button>
                 {/* Volumen */}
                 <div className="flex items-center gap-2 ml-auto group">
