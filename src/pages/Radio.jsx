@@ -241,8 +241,24 @@ const Radio = () => {
                     {isPlaying ? <Pause size={32} fill="black" /> : <Play size={32} fill="black" className="ml-1" />}
                 </button>
                 <button onClick={handleNext} className="text-zinc-400 hover:text-white"><SkipForward size={32}/></button>
-                <button onClick={handleLike} className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 ${isLiked ? "bg-red-500 border-red-500 text-white" : "border-zinc-600 hover:bg-white/10"}`}>
-                   <Heart className="w-5 h-5" fill={isLiked ? "currentColor" : "none"} />
+                <button 
+                    onClick={handleLike} 
+                    // ⭐️ CAMBIO CLAVE 1: Deshabilita el botón si ya tiene Like
+                    disabled={isLiked}
+                    className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 
+                        ${isLiked 
+                            // Estilos cuando ya dio like (Corazón relleno, cursor por defecto)
+                            ? "bg-red-500 border-red-500 text-white cursor-default" 
+                            // Estilos cuando NO ha dado like (Permite hover)
+                            : "border-zinc-600 hover:bg-white/10 hover:border-white"
+                        }`}
+                    title={isLiked ? "Ya te gusta esta canción" : "Dar Me Gusta"}
+                >
+                    <Heart 
+                        className="w-5 h-5" 
+                        // ⭐️ CAMBIO CLAVE 2: Mantiene el corazón relleno
+                        fill={isLiked ? "currentColor" : "none"} 
+                    />
                 </button>
                 <div className="flex items-center gap-2 ml-auto group">
                     <button onClick={() => setVolume(v => v === 0 ? 0.5 : 0)} className="text-zinc-400 group-hover:text-white">
