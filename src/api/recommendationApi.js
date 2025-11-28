@@ -57,9 +57,9 @@ export const getRecommendedTracksByLike = async () => { // <--- Sin parámetros
  * Obtiene el top de canciones de un artista específico.
  * Endpoint: GET /recommendations/artists/{idArtist}/top-tracks
  */
-export const getArtistTopTracks = async (artistId) => {
+export const getArtistTopTracks = async (idArtist) => {
     try {
-        const response = await recommendationApi.get(`/recommendations/artists/${artistId}/top-tracks`);
+        const response = await recommendationApi.get(`/recommendations/artists/${idArtist}/top-tracks`);
         return response.data;
     } catch (error) {
         console.error("Error al obtener top artista:", error);

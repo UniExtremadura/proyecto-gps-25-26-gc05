@@ -10,6 +10,7 @@ import {
   getRecommendedTracksByGenre, 
   getRecommendedTracksByLike 
 } from "../api/recommendationApi";
+import { getAlbums } from "../api/contentApi";
 
 const Recommendations = () => {
   const navigate = useNavigate();
@@ -28,19 +29,24 @@ const Recommendations = () => {
       try {
         setLoading(true);
 
-        // 1. Top Global (Público)
-        const topData = await getTopTracks();
-        setTrendingTracks(mapTracksToCarousel(topData, "Éxito Global"));
+        // 1. Cargar Álbumes (para tener las carátulas disponibles)
+        // Pedimos una página grande (1000) para tenerlos todos
+        const albumsData = await getAlbums(0, 1000);
+        setAlbums(albumsData);
 
-        // 2. Por Género (Privado - Usa Cookie)
-        // CAMBIO: Llamada sin argumentos
-        const genreData = await getRecommendedTracksByGenre(); 
-        setGenreRecommendations(mapTracksToCarousel(genreData, "Tu estilo favorito"));
+        // 2. Cargar Recomendaciones (en paralelo para ir rápido)
+        const [topData, genreData, likeData] = await Promise.all([
+            getTopTracks(),
+            getRecommendedTracksByGenre(),
+            getRecommendedTracksByLike()
+        ]);
 
-        // 3. Por Likes (Privado - Usa Cookie)
-        // CAMBIO: Llamada sin argumentos
-        const likeData = await getRecommendedTracksByLike();
-        setLikeRecommendations(mapTracksToCarousel(likeData, "Basado en tus likes"));
+        // 3. Mapear datos usando la lista de álbumes recién cargada
+        // Nota: Pasamos 'albumsData' directamente a la función porque el estado 'albums' 
+        // aún no se habrá actualizado dentro de este ciclo del useEffect.
+        setTrendingTracks(mapTracksToCarousel(topData, "Éxito Global", albumsData));
+        setGenreRecommendations(mapTracksToCarousel(genreData, "Tu estilo favorito", albumsData));
+        setLikeRecommendations(mapTracksToCarousel(likeData, "Basado en tus likes", albumsData));
 
       } catch (error) {
         console.error("Error cargando recomendaciones:", error);
@@ -56,8 +62,17 @@ const Recommendations = () => {
     fetchData();
   }, [navigate]); // Añadir navigate a dependencias es buena práctica
 
-  // --- HELPER: Transformar datos de API a formato Visual ---
-  const mapTracksToCarousel = (tracks, subtitleDefault) => {
+  // --- HELPER: Obtener Portada ---
+  const getAlbumCover = (albumId, albumsList) => {
+     if (!albumId || !albumsList) return null;
+     const album = albumsList.find(a => String(a.id) === String(albumId));
+     // Prioridad: cover_url (backend) > coverUrl (frontend) > null
+     return album ? (album.cover_url || album.coverUrl) : null;
+  };
+
+  // --- HELPER: Transformar datos ---
+  // Ahora recibe la lista de álbumes para buscar las fotos
+  const mapTracksToCarousel = (tracks, subtitleDefault, albumsList) => {
     if (!tracks || !Array.isArray(tracks)) return [];
 
     return tracks.map((track) => {
