@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { getAlbums, getArtists, getTracks } from "../api/contentApi";
 import { useCart } from "../contexts/CartContext"; 
 import { Search, Disc, Mic, Loader, AlertCircle, Filter } from 'lucide-react';
+import { Link } from "react-router-dom";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -23,7 +24,11 @@ const AlbumCard = ({ album, artistName, onClick, isActive }) => (
         />
       </div>
       <h3 className={`font-semibold truncate mb-1 ${isActive ? 'text-emerald-400' : 'text-white'}`}>{album.title}</h3>
-      <p className="text-sm text-zinc-400 truncate">{artistName || "Artista desconocido"}</p>
+      <p className="text-sm text-zinc-400 truncate hover:underline cursor-pointer">
+        <Link to={`/artist/${album.artistId || album.artist_id}`}>
+            {artistName}
+        </Link>
+      </p>
       <p className="text-xs text-emerald-500 mt-2 font-bold">20.00 €</p>
     </div>
 );
@@ -43,7 +48,11 @@ const AlbumDetailPanel = ({ album, artistName, tracks, onAddToCart }) => {
                 />
                 <div className="absolute bottom-0 p-6 bg-gradient-to-t from-zinc-900 via-zinc-900/80 to-transparent w-full">
                     <h2 className="text-3xl font-bold text-white line-clamp-1" title={album.title}>{album.title}</h2>
-                    <p className="text-xl text-emerald-400 font-medium">{artistName}</p>
+                    <p className="text-xl text-emerald-400 font-medium hover:underline cursor-pointer">
+                        <Link to={`/artist/${album.artistId || album.artist_id}`}>
+                            {artistName}
+                        </Link>
+                    </p>
                 </div>
             </div>
 

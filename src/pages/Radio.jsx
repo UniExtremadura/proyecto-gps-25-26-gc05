@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { getTracks, getArtists, getAlbums } from "../api/contentApi";
 import { addLike, registerPlay } from "../api/usersApi"; // <--- IMPORTANTE: Añadido registerPlay
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, ListMusic, Heart, Search, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // ID consistente con tu base de datos para que las métricas funcionen
 const CURRENT_USER_ID = 1001; 
@@ -25,6 +26,7 @@ const Radio = () => {
   const [isLiked, setIsLiked] = useState(false);
 
   const audioRef = useRef(null);
+  const navigate = useNavigate();
 
   // 1. Cargar Datos
   useEffect(() => {
@@ -97,6 +99,20 @@ const Radio = () => {
      const album = albums.find(a => String(a.id) === String(albumId));
      // Probamos coverUrl (frontend) o cover_url (backend)
      return album ? (album.coverUrl || album.cover_url) : null;
+  };
+
+  const goToArtistProfile = (albumId) => {
+     if (!albumId || albums.length === 0) return;
+     
+     // Buscamos el álbum para sacar el ID del artista
+     const album = albums.find(a => String(a.id) === String(albumId));
+     
+     if (album) {
+         const realArtistId = album.artistId || album.artist_id;
+         if (realArtistId) {
+             navigate(`/artist/${realArtistId}`);
+         }
+     }
   };
 
   // --- LÓGICA DE FILTRADO ---
@@ -194,7 +210,13 @@ const Radio = () => {
         <div className="flex-1 w-full flex flex-col justify-center">
             <div className="text-center md:text-left mb-6">
                 <h2 className="text-3xl font-bold text-white truncate">{currentTrack?.title}</h2>
-                <p className="text-xl text-emerald-400 mt-1">{getArtistName(currentTrack?.albumId || currentTrack?.album_id)}</p>
+                <p 
+                    className="text-xl text-emerald-400 mt-1 cursor-pointer hover:underline hover:text-emerald-300 transition-colors w-fit mx-auto md:mx-0"
+                    onClick={() => goToArtistProfile(currentTrack?.albumId || currentTrack?.album_id)}
+                    title="Ir al perfil del artista"
+                >
+                    {getArtistName(currentTrack?.albumId || currentTrack?.album_id)}
+                </p>
                 <span className="inline-block mt-2 px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">{currentTrack?.genre || "Sin género"}</span>
             </div>
             {/* Barra */}
@@ -283,8 +305,11 @@ const Radio = () => {
                         </div>
                         <div className="flex-1 px-4 min-w-0">
                             <p className={`font-medium truncate ${isActive ? 'text-emerald-400' : 'text-white'}`}>{track.title}</p>
-                            <p className="text-xs text-zinc-500 truncate">
-                                {getArtistName(track.albumId || track.album_id)}
+                            <p className="text-xs text-zinc-500 truncate cursor-pointer hover:underline"
+                            onClick={() => goToArtistProfile(track.albumId || track.album_id)}
+                            title="Ir al perfil del artista"
+                            >
+                            {getArtistName(track.albumId || track.album_id)}
                             </p>
                         </div>
                         <div className="text-zinc-500 text-xs px-2 py-1 rounded border border-zinc-800 bg-black/30 mr-4 hidden sm:block">
