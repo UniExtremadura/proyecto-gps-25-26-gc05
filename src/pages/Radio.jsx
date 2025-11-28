@@ -145,26 +145,32 @@ const Radio = () => {
 const handleLike = async () => {
     // 1. Validación de seguridad
     if (!user?.userId) {
-      alert("Debes iniciar sesión para dar Like ❤️");
-      return;
+        alert("Debes iniciar sesión para dar Like ❤️");
+    return;
     }
 
     if (!playlist[currentTrackIndex]) return;
     const currentTrack = playlist[currentTrackIndex];
 
-    // 2. Si ya está marcado visualmente, no hacemos nada (doble seguridad)
-    if (isLiked) return;
-
-    // 3. Optimistic UI: Lo marcamos INMEDIATAMENTE
-    setIsLiked(true);
+    // --- CAMBIO AQUÍ: LÓGICA DE TOGGLE (INTERRUPTOR) ---
+    if (isLiked) {
+      // Si ya tiene like, lo quitamos VISUALMENTE
+      setIsLiked(false);
+      console.log(`💔 Like quitado visualmente: ${currentTrack.id}`);
+      // Nota: Como pediste "visualmente solo", no llamamos a ninguna API para borrarlo.
+    } else {
+      // Si no tiene like, lo ponemos
+        setIsLiked(true); // Optimistic UI
 
     try {
-      await addLike(user.userId, currentTrack.id);
-      console.log(`❤️ Like registrado: ${currentTrack.id}`);
+        await addLike(user.userId, currentTrack.id);
+        console.log(`❤️ Like registrado: ${currentTrack.id}`);
     } catch (error) {
-      console.error("El like ya existía o hubo error:", error);
+        console.error("Error al registrar like:", error);
+        // Opcional: Si falla la API, podrías revertir el visual con setIsLiked(false)
     }
-  };
+    }
+};
 
   const handlePlayPause = () => setIsPlaying(!isPlaying);
 
@@ -244,21 +250,19 @@ const handleLike = async () => {
                 <button onClick={handleNext} className="text-zinc-400 hover:text-white"><SkipForward size={32}/></button>
                 <button 
                     onClick={handleLike} 
-                    // ⭐️ CAMBIO CLAVE 1: Deshabilita el botón si ya tiene Like
-                    disabled={isLiked}
+                    {/* CAMBIO 1: Quitamos disabled={isLiked} para poder clicar de nuevo */}
                     className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 
-                        ${isLiked 
-                            // Estilos cuando ya dio like (Corazón relleno, cursor por defecto)
-                            ? "bg-red-500 border-red-500 text-white cursor-default" 
-                            // Estilos cuando NO ha dado like (Permite hover)
-                            : "border-zinc-600 hover:bg-white/10 hover:border-white"
-                        }`}
-                    title={isLiked ? "Ya te gusta esta canción" : "Dar Me Gusta"}
+                    ${isLiked 
+                    // Estilos cuando TIENE like (Rojo, pero permite hover para indicar que se puede quitar)
+                    ? "bg-red-500 border-red-500 text-white hover:bg-red-600 hover:scale-105" 
+                    // Estilos cuando NO tiene like
+                    : "border-zinc-600 hover:bg-white/10 hover:border-white"
+                    }`}
+                    title={isLiked ? "Quitar Me Gusta" : "Dar Me Gusta"}
                 >
-                    <Heart 
-                        className="w-5 h-5" 
-                        // ⭐️ CAMBIO CLAVE 2: Mantiene el corazón relleno
-                        fill={isLiked ? "currentColor" : "none"} 
+                <Heart 
+                    className="w-5 h-5" 
+                    fill={isLiked ? "currentColor" : "none"} 
                     />
                 </button>
                 <div className="flex items-center gap-2 ml-auto group">
