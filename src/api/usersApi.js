@@ -14,7 +14,7 @@ export const setAuthToken = (token) => {
   if (token) {
     const clean = token.replace(/^Bearer\s+/i, "");
     usersApi.defaults.headers.common['Authorization'] = `Bearer ${clean}`;
-    console.log("🔥 Token enviado a backend:", `Bearer ${clean}`);
+    console.log("Token enviado a backend:", `Bearer ${clean}`);
   } else {
     delete usersApi.defaults.headers.common['Authorization'];
   }
@@ -75,9 +75,6 @@ export const loginUser = async ({ email, password, recaptchaToken }) => {
 
 
 
-
-
-
 export const logoutUser = async () => {
   const res = await usersApi.post('/users/auth/logout');
   return res.status === 200;
@@ -86,24 +83,30 @@ export const logoutUser = async () => {
 /* ========= PERFIL ========= */
 
 export const getUserProfile = async (userId) => {
-  console.log("📡 GET PROFILE → userId:", userId);
+  console.log("GET PROFILE → userId:", userId);
 
   try {
     const res = await usersApi.get(`/users/${userId}/profile`);
-    console.log("📡 RESPUESTA PERFIL:", res);
+    console.log("RESPUESTA PERFIL:", res);
     return res.data;
   } catch (err) {
-    console.error("❌ ERROR GET PROFILE:", err.response || err);
+    console.error("ERROR GET PROFILE:", err.response || err);
     throw err;
   }
 };
 
 
-export const updateUserProfile = async (userId, { displayName, avatarUrl, bio }) => {
-  const body = { displayName, avatarUrl, bio };
-  const res = await usersApi.patch(`/users/${userId}/profile`, body);
+export const updateUserProfile = async (userId, form) => {
+  const body = {
+    display_name: form.displayName,
+    avatar_url: form.avatarUrl,
+    bio: form.bio
+  };
+
+  const res = await usersApi.patch(`/users/${userId}`, body);
   return res.status === 200;
 };
+
 
 /* ========= MÉTODOS DE PAGO ========= */
 

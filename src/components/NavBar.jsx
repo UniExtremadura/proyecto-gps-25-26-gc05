@@ -106,7 +106,12 @@ const NavBar = () => {
                   </Button>
                 </Link>
 
-                <Button variant="secondary" size="sm" onClick={logout}>
+                <Button variant="secondary" size="sm"
+                  onClick={() => {
+                    logout();
+                    navigate("/login");
+                  }}
+                >
                   Cerrar Sesión
                 </Button>
               </>
@@ -148,7 +153,14 @@ const NavBar = () => {
           
           <div className="pt-4 border-t border-gray-700 flex flex-col gap-2">
             {user?.token ? (
-              <Button variant="secondary" className="w-full" onClick={handleLogout}>Cerrar Sesión</Button>
+              <Button variant="secondary" className="w-full"
+                onClick={() => {
+                  logout();
+                  navigate("/login");
+                }}
+              >
+                Cerrar Sesión
+              </Button>
             ) : (
               <>
                 <Button variant="ghost" className="w-full justify-start text-white" onClick={() => navigate("/login")}>
