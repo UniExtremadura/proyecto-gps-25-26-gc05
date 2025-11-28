@@ -6,50 +6,85 @@ const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
-  // Eliminamos el estado 'token', ya no lo manejamos en JS
+  const [role, setRole] = useState(null);
+
 
   useEffect(() => {
-    // CORRECCIÓN 2: Al cargar, solo buscamos el userId para restaurar la sesión visual.
-    // Ya no buscamos 'authToken' en localStorage.
-    const savedUserId = localStorage.getItem('userId');
+    const checkSession = async () => {
+      try {
+        // Pedimos al backend si la cookie sigue siendo válida
+        const res = await fetch("http://localhost:8080/users/auth/me", {
+          method: "GET",
+          credentials: "include"
+        });
 
-    if (savedUserId) {
-       setUserId(savedUserId);
-    }
+        if (res.ok) {
+          const data = await res.json();
+
+          setUserId(data.userId);
+          setRole(data.role);
+
+          localStorage.setItem("userId", data.userId);
+          localStorage.setItem("role", data.role);
+        } else {
+          // Sesión inválida → limpiar frontend
+          setUserId(null);
+          localStorage.removeItem("userId");
+        }
+      } catch (error) {
+        console.error("Error comprobando sesión:", error);
+        setUserId(null);
+        localStorage.removeItem("userId");
+      }
+    };
+
+    checkSession();
   }, []);
 
-  // La función login ahora recibe solo el objeto con userId (o lo que mande tu loginUser)
+  useEffect(() => {
+    const savedUserId = localStorage.getItem('userId');
+    if (savedUserId) setUserId(savedUserId);
+
+
+    const savedRole = localStorage.getItem("role");
+    if (savedRole) setRole(savedRole);
+
+  }, []);
+
   const login = (userData) => {
-    const id = userData.userId || userData.id; // Nos aseguramos de tener el ID
-    
-    setUserId(id);
-    localStorage.setItem('userId', id);
-    
-    // CORRECCIÓN 3: Eliminadas las llamadas a setToken y setAuthToken
+      const id = userData.userId || userData.id;
+      const r = userData.role;
+
+      setUserId(id);
+      setRole(r);
+
+      localStorage.setItem("userId", id);
+      localStorage.setItem("role", r);
   };
 
   const logout = async () => {
-    // CORRECCIÓN 4: Avisamos al backend para que borre la cookie
     try {
         await logoutUser();
     } catch (error) {
         console.error("Error avisando al backend del logout", error);
     }
 
-    // Limpiamos el estado local
     setUserId(null);
     localStorage.removeItem('userId');
-    // localStorage.removeItem('authToken'); // Ya no existe, no hace falta borrarlo
+    setRole(null);
+    localStorage.removeItem("role");
+
   };
 
   return (
     <UserContext.Provider
       value={{
-        // El objeto user ahora solo tiene lo que podemos ver (userId)
-        user: userId ? { userId } : null,
+        user: userId ? { userId, role } : null,
         login,
         logout,
-        isAuthenticated: Boolean(userId)
+        isAuthenticated: Boolean(userId), 
+        isArtist: role === "artist",
+        isUser: role === "user"
       }}
     >
       {children}
