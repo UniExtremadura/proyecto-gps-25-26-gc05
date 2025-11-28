@@ -42,37 +42,37 @@ export const registerUser = async ({ email, password, rol, recaptchaToken }) => 
     }
   );
 
-  return res.status === 201;
+  return true;
 };
 
 
 export const loginUser = async ({ email, password, recaptchaToken }) => {
+
+  const headers = {};
+
+  // Solo añadimos reCAPTCHA si realmente existe Y NO es null
+  if (recaptchaToken && recaptchaToken !== "null") {
+    headers["X-Recaptcha-Token"] = recaptchaToken;
+  }
+
   const res = await usersApi.post(
     "/users/auth/login",
     { email, password },
-    {
-      headers: {
-        "X-Recaptcha-Token": recaptchaToken,
-        "Accept": "*/*"
-      }
-    }
+    { headers }
   );
 
-    const tokenRaw = res.headers["authorization"] || res.headers["Authorization"];
-    const userId = res.headers["x-user-id"] || res.headers["X-User-Id"];
-    console.log("🔥 tokenRaw recibido desde backend:", tokenRaw);
-    console.log("🔥 userId recibido:", userId);
+  const tokenRaw = res.headers["authorization"] || res.headers["Authorization"];
+  const userId = res.headers["x-user-id"] || res.headers["X-User-Id"];
 
-    if (!tokenRaw || !userId) throw new Error("No token o userId");
+  if (!tokenRaw || !userId) throw new Error("No token o userId");
 
-    // formato
-    const token = tokenRaw.startsWith("Bearer ")
+  const token = tokenRaw.startsWith("Bearer ")
     ? tokenRaw.substring(7)
     : tokenRaw;
 
-    return { token, userId };
-
+  return { token, userId };
 };
+
 
 
 
