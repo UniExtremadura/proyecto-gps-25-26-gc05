@@ -141,22 +141,31 @@ const Radio = () => {
       }
   };
 
-  const handleLike = async () => {
-    if (!playlist[currentTrackIndex]) return;
-    const currentTrack = playlist[currentTrackIndex];
-    
-    // Optimistic UI: Marcamos el like inmediatamente
-    setIsLiked(true);
-    
-    try {
-      // Usamos el ID real (1001) y Long para el track
-      await addLike(CURRENT_USER_ID, currentTrack.id);
-      console.log(`❤️ Like registrado: ${currentTrack.id}`);
-    } catch (error) {
-      console.error("Error like:", error);
-      setIsLiked(false); // Revertimos si falla
-    }
-  };
+// ... dentro de Radio.jsx
+
+const handleLike = async () => {
+  if (!playlist[currentTrackIndex]) return;
+  const currentTrack = playlist[currentTrackIndex];
+
+  // AÑADIR ESTA GUARDIA: Si ya le dimos like (isLiked es true), salimos.
+  if (isLiked) {
+    console.log(`❌ Ya le diste like a esta canción: ${currentTrack.id}`);
+    return; 
+  }
+
+  // Optimistic UI: Marcamos el like inmediatamente
+  // Esto hace que el corazón se rellene al instante
+  setIsLiked(true);
+  
+  try {
+    // Usamos el ID real (1001) y Long para el track
+    await addLike(CURRENT_USER_ID, currentTrack.id);
+    console.log(`❤️ Like registrado: ${currentTrack.id}`);
+  } catch (error) {
+    console.error("Error like:", error);
+    setIsLiked(false); // Revertimos si la API falla
+  }
+};
 
   const handlePlayPause = () => setIsPlaying(!isPlaying);
 
