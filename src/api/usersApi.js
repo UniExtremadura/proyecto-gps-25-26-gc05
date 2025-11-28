@@ -116,20 +116,40 @@ export const updateUserProfile = async (userId, form) => {
 
 /* ========= MÉTODOS DE PAGO ========= */
 
-export const createPaymentMethod = async (userId, { provider, numC, cadC, cvv }) => {
-  const body = { provider, numC, cadC, cvv };
-  const res = await usersApi.post(`/users/${userId}/payment-methods`, body);
-  return res.status === 201;
+export const getPaymentMethods = async (userId) => {
+    try {
+        const response = await usersApi.get(`/users/${userId}/payment-methods`);
+        return response.data;
+    } catch (error) {
+        console.error("Error obteniendo métodos de pago:", error);
+        return [];
+    }
 };
 
-export const listPaymentMethods = async (userId) => {
-  const res = await usersApi.get(`/users/${userId}/payment-methods`);
-  return res.data;
+// Alias para mantener compatibilidad si lo usas como listPaymentMethods
+export const listPaymentMethods = getPaymentMethods;
+
+export const createPaymentMethod = async (userId, paymentData) => {
+    try {
+        const response = await usersApi.post(`/users/${userId}/payment-methods`, paymentData);
+        return response.data;
+    } catch (error) {
+        console.error("Error añadiendo método de pago:", error);
+        throw error;
+    }
 };
 
-export const deletePaymentMethod = async (userId, paymentMethodId) => {
-  const res = await usersApi.delete(`/users/${userId}/payment-methods/${paymentMethodId}`);
-  return res.status === 204;
+// Alias para compatibilidad
+export const addPaymentMethod = createPaymentMethod;
+
+export const deletePaymentMethod = async (userId, paymentId) => {
+    try {
+        await usersApi.delete(`/users/${userId}/payment-methods/${paymentId}`);
+        return true;
+    } catch (error) {
+        console.error("Error borrando método de pago:", error);
+        return false;
+    }
 };
 
 /* ========= LIKES / SUSCRIPCIONES / PLAYS ========= */
