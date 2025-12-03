@@ -21,6 +21,7 @@ const mockNews = [
   { id: 4, title: "Guía de Festivales 2025", image: "https://musicanueva.es/wp-content/uploads/2025/07/Guia-de-festivales-agosto-Espana-y-Portugal.jpg", description: "Todo lo que necesitas saber para este verano." },
 ];
 
+//Home
 const Home = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   

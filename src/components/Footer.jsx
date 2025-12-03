@@ -2,8 +2,10 @@ import React from 'react';
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
 
+//Footer
 const Footer = () => {
   const location = useLocation();
+
 
   const scrollToTop = () => {
     if (location.pathname === '/') {

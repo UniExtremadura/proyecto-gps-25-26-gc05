@@ -42,7 +42,7 @@ const mockNews = [
   }
 ];
 
-//Añadidos campos a la Newsletter
+//Añadidos campos a la Newsletter, accesibilidad
 const NewsLetter = () => {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);

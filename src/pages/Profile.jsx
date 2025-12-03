@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useUser } from "../contexts/UserContext";
 import { getUserProfile, updateUserProfile } from "../api/usersApi";
 
+
+//Perfil de usuario
 const Profile = () => {
   const { user, isAuthenticated } = useUser();
   const [profile, setProfile] = useState(null);
