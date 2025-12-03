@@ -7,6 +7,7 @@ const bannerItems = [
   { image: "https://i.ytimg.com/vi/-VnIClI6HPI/maxresdefault.jpg", title: "Nuevos lanzamientos de Electrónica" }
 ];
 
+
 const HomeWindow = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();

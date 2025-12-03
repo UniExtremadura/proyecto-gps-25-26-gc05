@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 
+//Carrito de la compra
 const CartPage = () => {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const navigate = useNavigate();

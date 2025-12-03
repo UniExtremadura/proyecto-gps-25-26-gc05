@@ -5,6 +5,7 @@ import { useCart } from "../contexts/CartContext";
 import { Search, Disc, Mic, Loader, AlertCircle, Filter } from 'lucide-react';
 import { Link } from "react-router-dom";
 
+
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }

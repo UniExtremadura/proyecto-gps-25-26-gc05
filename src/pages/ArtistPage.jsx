@@ -4,8 +4,10 @@ import { useParams } from 'react-router-dom';
 // 1. API Contenidos (Datos estáticos y Fallback)
 import { getArtistById, getArtistAlbums, getArtistTracks } from '../api/contentApi';
 
+
 // 2. API Recomendaciones (Datos inteligentes)
 import { getArtistTopTracks } from '../api/recommendationApi';
+
 
 import { Disc, Music, User } from 'lucide-react';
 

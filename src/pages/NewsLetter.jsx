@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Calendar, User, ArrowRight, Mail, CheckCircle } from "lucide-react";
 
+
 // --- TUS DATOS NUEVOS ---
 const mockNews = [
   { 
@@ -41,6 +42,7 @@ const mockNews = [
   }
 ];
 
+//Añadidos campos a la Newsletter, accesibilidad
 const NewsLetter = () => {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
