@@ -96,7 +96,6 @@ const Profile = () => {
 
       {/* ===== Banner superior ===== */}
       <div className="relative rounded-2xl overflow-hidden shadow-lg bg-gradient-to-r from-black to-gray-800 text-white py-16 flex flex-col items-center">
-        
         <h1 className="text-4xl font-extrabold mb-6">Mi Perfil</h1>
 
         <img
@@ -182,6 +181,7 @@ const Profile = () => {
             >
               Guardar cambios
             </button>
+
             <button
               onClick={() => setIsEditing(false)}
               className="px-6 py-3 bg-gray-300 text-black rounded-lg hover:bg-gray-400 transition"

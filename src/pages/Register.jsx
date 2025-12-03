@@ -3,7 +3,6 @@ import { registerUser, loginUser } from "../api/usersApi";
 import { useUser } from "../contexts/UserContext";
 import { useNavigate } from "react-router-dom";
 
-
 const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,7 +12,6 @@ const Register = () => {
 
   const { login } = useUser();
   const navigate = useNavigate();
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,7 +59,6 @@ const Register = () => {
     setLoading(false);
   };
 
-  //Añadidas validaciones de formularios
   return (
     <div className="min-h-screen flex items-start justify-center bg-gray-100 pt-20 px-4">
       <form
