@@ -13,6 +13,7 @@ const NavBar = () => {
  
   const { user, logout, isAuthenticated } = useUser();
   
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -32,6 +33,7 @@ const NavBar = () => {
     }
   };
 
+  
   // Estilos para los enlaces del menú
   const linkStyles = ({ isActive }) =>
     `px-3 py-2 text-sm font-medium transition-colors duration-200 ${

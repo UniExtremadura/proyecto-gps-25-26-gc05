@@ -19,7 +19,7 @@ const getRecaptchaToken = (action) =>
     });
   });
 
-  
+
 const Login = () => {
   const { login } = useUser();
   const navigate = useNavigate();
@@ -48,6 +48,7 @@ const Login = () => {
     }
   };
 
+  //Añadidas validaciones de formularios
   return (
     <div className="min-h-screen flex items-start justify-center bg-gray-100 pt-20 px-4">
       <form
