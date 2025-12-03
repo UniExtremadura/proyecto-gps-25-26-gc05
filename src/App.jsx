@@ -52,4 +52,6 @@ function App() {
   );
 }
 
+// git commit -m "GC05-68 Configurar API Gateway"
+
 export default App;
