@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 
 const RECAPTCHA_SITE_KEY = '6LfVjAosAAAAAAwLXxQHCLTsM_jUxL8eKw-4H53z';
 
-
 const getRecaptchaToken = (action) =>
   new Promise((resolve, reject) => {
     if (!window.grecaptcha) {
@@ -18,7 +17,6 @@ const getRecaptchaToken = (action) =>
         .catch(reject);
     });
   });
-
 
 const Login = () => {
   const { login } = useUser();
@@ -48,7 +46,6 @@ const Login = () => {
     }
   };
 
-  //Añadidas validaciones de formularios
   return (
     <div className="min-h-screen flex items-start justify-center bg-gray-100 pt-20 px-4">
       <form
