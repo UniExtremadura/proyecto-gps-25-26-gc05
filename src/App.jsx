@@ -52,4 +52,7 @@ function App() {
   );
 }
 
+// git commit -m "GC05-68 Configurar API Gateway"
+// git commit -m "GC05-106 Variables de entorno y conexión segura"
+
 export default App;
