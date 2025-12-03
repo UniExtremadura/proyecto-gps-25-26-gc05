@@ -98,5 +98,7 @@ const Login = () => {
   );
 };
 
+//git commit -m "GC05-103 UI botón “Cerrar sesión”"
+
 export default Login;
 
