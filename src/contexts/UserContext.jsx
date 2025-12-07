@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 // CORRECCIÓN 1: Eliminamos setAuthToken y traemos logoutUser
 import { logoutUser } from '../api/usersApi';
+import PropTypes from 'prop-types';
 
 const UserContext = createContext(null);
 
@@ -90,6 +91,10 @@ export const UserProvider = ({ children }) => {
       {children}
     </UserContext.Provider>
   );
+};
+
+UserProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export const useUser = () => useContext(UserContext);
