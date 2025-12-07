@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link} from "react-router-dom";
 import { getAlbums, getArtists, getTracks } from "../api/contentApi";
 import { useCart } from "../contexts/CartContext"; 
-import { Search, Disc, Mic, Loader, AlertCircle, Filter } from 'lucide-react';
-import { Link } from "react-router-dom";
+import { Search, Disc, Loader, AlertCircle, Filter } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 function useQuery() {
