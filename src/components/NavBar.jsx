@@ -18,12 +18,6 @@ const NavBar = () => {
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
-
   const scrollToTop = (path) => {
     if (location.pathname === path) {
       window.scrollTo({ top: 0, behavior: "smooth" });
