@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link} from "react-router-dom";
 import { getAlbums, getArtists, getTracks } from "../api/contentApi";
 import { useCart } from "../contexts/CartContext"; 
 import { Search, Disc, Loader, AlertCircle, Filter } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -31,6 +32,19 @@ const AlbumCard = ({ album, artistName, onClick, isActive }) => (
       <p className="text-xs text-emerald-500 mt-2 font-bold">20.00 €</p>
     </div>
 );
+
+AlbumCard.propTypes = {
+  album: PropTypes.shape({
+    id: PropTypes.any,
+    title: PropTypes.string,
+    cover_url: PropTypes.string,
+    artistId: PropTypes.any,
+    artist_id: PropTypes.any,
+  }).isRequired,
+  artistName: PropTypes.string,
+  onClick: PropTypes.func,
+  isActive: PropTypes.bool,
+};
 
 // Panel de Detalles (Derecha)
 const AlbumDetailPanel = ({ album, artistName, tracks, onAddToCart }) => {
@@ -84,6 +98,19 @@ const AlbumDetailPanel = ({ album, artistName, tracks, onAddToCart }) => {
             </div>
         </div>
     );
+};
+
+AlbumDetailPanel.propTypes = {
+  album: PropTypes.shape({
+    id: PropTypes.any,
+    title: PropTypes.string,
+    cover_url: PropTypes.string,
+    artistId: PropTypes.any,
+    artist_id: PropTypes.any,
+  }), // No ponemos isRequired porque al inicio del componente verificas "if (!album)"
+  artistName: PropTypes.string,
+  tracks: PropTypes.array, // Esto soluciona los errores de "tracks.length" y "tracks.map"
+  onAddToCart: PropTypes.func,
 };
 
 function MarketPlace() {
