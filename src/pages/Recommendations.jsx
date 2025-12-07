@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, TrendingUp, Headphones, Star, AlertCircle } from "lucide-react";
 import GenericCarousel from "../components/GenericCarousel";
-import { motion } from "framer-motion";
 
 // Importamos la API de recomendaciones Y la de contenidos (para los álbumes)
 import { 
@@ -22,7 +21,7 @@ const Recommendations = () => {
   const [likeRecommendations, setLikeRecommendations] = useState([]);
   
   // NUEVO: Estado para guardar los álbumes (para sacar las fotos)
-  const [albums, setAlbums] = useState([]);
+  const [setAlbums] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {

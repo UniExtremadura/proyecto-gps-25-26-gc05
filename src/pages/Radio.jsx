@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getTracks, getArtists, getAlbums } from "../api/contentApi";
-import { addLike, registerPlay } from "../api/usersApi"; // <--- IMPORTANTE: Añadido registerPlay
+import { addLike, registerPlay } from "../api/usersApi";
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, ListMusic, Heart, Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
@@ -192,8 +192,6 @@ const handleLike = async () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex flex-col items-center py-10 px-4">
-      {/* ... (Todo tu JSX visual se mantiene igual) ... */}
-      
       {/* HEADER */}
       <div className="text-center mb-8 animate-fade-in">
         <h1 className="text-4xl font-bold tracking-wider flex items-center justify-center gap-3">
@@ -201,8 +199,9 @@ const handleLike = async () => {
         </h1>
       </div>
 
-      {/* REPRODUCTOR (Mismo código visual) */}
+      {/* REPRODUCTOR */}
       <div className="w-full max-w-4xl bg-zinc-900/80 backdrop-blur-md rounded-3xl border border-zinc-800 p-8 shadow-2xl flex flex-col md:flex-row gap-10 items-center mb-8">
+        {/* Carátula */}
         <div className="relative w-64 h-64 flex-shrink-0">
            <div className={`w-full h-full rounded-full border-4 border-zinc-800 overflow-hidden shadow-xl relative ${isPlaying ? 'animate-spin-slow' : ''}`} style={{ animationDuration: '10s' }}>
               <img 
@@ -214,58 +213,90 @@ const handleLike = async () => {
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-zinc-900 rounded-full border-2 border-zinc-700"></div>
            </div>
         </div>
+
+        {/* Controles y Datos */}
         <div className="flex-1 w-full flex flex-col justify-center">
             <div className="text-center md:text-left mb-6">
                 <h2 className="text-3xl font-bold text-white truncate">{currentTrack?.title}</h2>
+                
+                {/* --- CORRECCIÓN ACCESIBILIDAD (Artista) --- */}
                 <p 
                     className="text-xl text-emerald-400 mt-1 cursor-pointer hover:underline hover:text-emerald-300 transition-colors w-fit mx-auto md:mx-0"
                     onClick={() => goToArtistProfile(currentTrack?.albumId || currentTrack?.album_id)}
                     title="Ir al perfil del artista"
+                    role="link" 
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            goToArtistProfile(currentTrack?.albumId || currentTrack?.album_id);
+                        }
+                    }}
                 >
                     {getArtistName(currentTrack?.albumId || currentTrack?.album_id)}
                 </p>
                 <span className="inline-block mt-2 px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">{currentTrack?.genre || "Sin género"}</span>
             </div>
+
+            {/* Barra de Progreso */}
             <div className="mb-6">
-                <div className="w-full bg-zinc-700 rounded-full h-2 mb-2 cursor-pointer relative"
-                     onClick={(e) => {
+                {/* --- CORRECCIÓN ACCESIBILIDAD Y LÓGICA (Progress Bar) --- */}
+                <div 
+                    className="w-full bg-zinc-700 rounded-full h-2 mb-2 cursor-pointer relative"
+                    onClick={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         const pos = (e.clientX - rect.left) / rect.width;
                         if(audioRef.current) audioRef.current.currentTime = pos * audioRef.current.duration;
-                     }}>
+                    }}
+                    role="slider"
+                    aria-label="Control de tiempo de reproducción"
+                    aria-valuenow={progress} // Buena práctica
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (!audioRef.current) return;
+                        if (e.key === 'ArrowRight') audioRef.current.currentTime += 5;
+                        if (e.key === 'ArrowLeft') audioRef.current.currentTime -= 5;
+                    }}
+                >
+                    {/* AQUÍ ESTABA EL ERROR: Usamos `progress` en lugar del comentario */}
                     <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
                 </div>
             </div>
+
+            {/* Botones de Control */}
             <div className="flex items-center justify-center md:justify-start gap-6">
                 <button onClick={handlePrev} className="text-zinc-400 hover:text-white"><SkipBack size={32}/></button>
                 <button onClick={handlePlayPause} className="w-16 h-16 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105">
                     {isPlaying ? <Pause size={32} fill="black" /> : <Play size={32} fill="black" className="ml-1" />}
                 </button>
                 <button onClick={handleNext} className="text-zinc-400 hover:text-white"><SkipForward size={32}/></button>
+                
                 <button 
                     onClick={handleLike} 
-                    // ⭐️ CAMBIO CLAVE 1: Deshabilita el botón si ya tiene Like
                     disabled={isLiked}
-                    className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 
-                        ${isLiked 
-                            // Estilos cuando ya dio like (Corazón relleno, cursor por defecto)
-                            ? "bg-red-500 border-red-500 text-white cursor-default" 
-                            // Estilos cuando NO ha dado like (Permite hover)
-                            : "border-zinc-600 hover:bg-white/10 hover:border-white"
-                        }`}
+                    className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ml-4 ${isLiked ? "bg-red-500 border-red-500 text-white cursor-default" : "border-zinc-600 hover:bg-white/10 hover:border-white"}`}
                     title={isLiked ? "Ya te gusta esta canción" : "Dar Me Gusta"}
                 >
-                    <Heart 
-                        className="w-5 h-5" 
-                        // ⭐️ CAMBIO CLAVE 2: Mantiene el corazón relleno
-                        fill={isLiked ? "currentColor" : "none"} 
-                    />
+                    <Heart className="w-5 h-5" fill={isLiked ? "currentColor" : "none"} />
                 </button>
+
                 <div className="flex items-center gap-2 ml-auto group">
                     <button onClick={() => setVolume(v => v === 0 ? 0.5 : 0)} className="text-zinc-400 group-hover:text-white">
                         {volume === 0 ? <VolumeX size={20}/> : <Volume2 size={20}/>}
                     </button>
-                    <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(e) => { setVolume(parseFloat(e.target.value)); if(audioRef.current) audioRef.current.volume = parseFloat(e.target.value); }} className="w-20 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"/>
+                    <input 
+                        type="range" 
+                        min="0" 
+                        max="1" 
+                        step="0.01" 
+                        value={volume} 
+                        onChange={(e) => { 
+                            const val = Number.parseFloat(e.target.value); 
+                            
+                            setVolume(val); 
+                            if(audioRef.current) audioRef.current.volume = val; 
+                        }} 
+                        className="w-20 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+                    />
                 </div>
             </div>
         </div>
@@ -315,6 +346,13 @@ const handleLike = async () => {
                     <div 
                         key={track.id} 
                         onClick={() => handleTrackClick(track)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                handleTrackClick(track);
+                            }
+                        }}
                         className={`flex items-center p-4 border-b border-zinc-800 hover:bg-white/5 cursor-pointer transition-colors ${isActive ? 'bg-white/10 border-l-4 border-l-emerald-500' : ''}`}
                     >
                         <div className="w-8 text-center text-zinc-500 font-mono text-sm">
@@ -322,11 +360,24 @@ const handleLike = async () => {
                         </div>
                         <div className="flex-1 px-4 min-w-0">
                             <p className={`font-medium truncate ${isActive ? 'text-emerald-400' : 'text-white'}`}>{track.title}</p>
-                            <p className="text-xs text-zinc-500 truncate cursor-pointer hover:underline"
-                            onClick={() => goToArtistProfile(track.albumId || track.album_id)}
-                            title="Ir al perfil del artista"
+                            
+                            <p 
+                                className="text-xs text-zinc-500 truncate cursor-pointer hover:underline"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    goToArtistProfile(track.albumId || track.album_id);
+                                }}
+                                title="Ir al perfil del artista"
+                                role="link"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.stopPropagation();
+                                        goToArtistProfile(track.albumId || track.album_id);
+                                    }
+                                }}
                             >
-                            {getArtistName(track.albumId || track.album_id)}
+                                {getArtistName(track.albumId || track.album_id)}
                             </p>
                         </div>
                         <div className="text-zinc-500 text-xs px-2 py-1 rounded border border-zinc-800 bg-black/30 mr-4 hidden sm:block">

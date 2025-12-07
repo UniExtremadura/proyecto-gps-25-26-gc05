@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link} from "react-router-dom";
 import { getAlbums, getArtists, getTracks } from "../api/contentApi";
 import { useCart } from "../contexts/CartContext"; 
-import { Search, Disc, Mic, Loader, AlertCircle, Filter } from 'lucide-react';
-import { Link } from "react-router-dom";
+import { Search, Disc, Loader, AlertCircle, Filter } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -13,6 +13,15 @@ function useQuery() {
 const AlbumCard = ({ album, artistName, onClick, isActive }) => (
     <div 
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        // Permite activar la tarjeta con Enter o Espacio
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+        }
+      }}
       className={`group p-4 rounded-xl transition-all duration-300 cursor-pointer border ${isActive ? 'bg-zinc-800 border-emerald-500/50 shadow-lg' : 'bg-zinc-900/50 hover:bg-zinc-800 border-transparent hover:border-zinc-700'}`}
     >
       <div className="relative w-full aspect-square rounded-lg mb-4 shadow-lg flex items-center justify-center overflow-hidden bg-zinc-800">
@@ -25,13 +34,26 @@ const AlbumCard = ({ album, artistName, onClick, isActive }) => (
       </div>
       <h3 className={`font-semibold truncate mb-1 ${isActive ? 'text-emerald-400' : 'text-white'}`}>{album.title}</h3>
       <p className="text-sm text-zinc-400 truncate hover:underline cursor-pointer">
-        <Link to={`/artist/${album.artistId || album.artist_id}`}>
+        <Link to={`/artist/${album.artistId || album.artist_id}`} onClick={(e) => e.stopPropagation()}>
             {artistName}
         </Link>
       </p>
       <p className="text-xs text-emerald-500 mt-2 font-bold">20.00 €</p>
     </div>
 );
+
+AlbumCard.propTypes = {
+  album: PropTypes.shape({
+    id: PropTypes.any,
+    title: PropTypes.string,
+    cover_url: PropTypes.string,
+    artistId: PropTypes.any,
+    artist_id: PropTypes.any,
+  }).isRequired,
+  artistName: PropTypes.string,
+  onClick: PropTypes.func,
+  isActive: PropTypes.bool,
+};
 
 // Panel de Detalles (Derecha)
 const AlbumDetailPanel = ({ album, artistName, tracks, onAddToCart }) => {
@@ -85,6 +107,19 @@ const AlbumDetailPanel = ({ album, artistName, tracks, onAddToCart }) => {
             </div>
         </div>
     );
+};
+
+AlbumDetailPanel.propTypes = {
+  album: PropTypes.shape({
+    id: PropTypes.any,
+    title: PropTypes.string,
+    cover_url: PropTypes.string,
+    artistId: PropTypes.any,
+    artist_id: PropTypes.any,
+  }), // No ponemos isRequired porque al inicio del componente verificas "if (!album)"
+  artistName: PropTypes.string,
+  tracks: PropTypes.array, // Esto soluciona los errores de "tracks.length" y "tracks.map"
+  onAddToCart: PropTypes.func,
 };
 
 function MarketPlace() {
