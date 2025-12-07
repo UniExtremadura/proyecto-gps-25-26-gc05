@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // IMPORTANTE: Usamos tus nombres de función
 import { listPaymentMethods, deletePaymentMethod } from '../api/usersApi'; 
 import { CreditCard, Trash2 } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 const PaymentMethods = ({ userId, onSelect, selectedId }) => {
     const [methods, setMethods] = useState([]);
@@ -77,6 +78,12 @@ const PaymentMethods = ({ userId, onSelect, selectedId }) => {
             )}
         </div>
     );
+};
+
+PaymentMethods.propTypes = {
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onSelect: PropTypes.func,
+  selectedId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default PaymentMethods;

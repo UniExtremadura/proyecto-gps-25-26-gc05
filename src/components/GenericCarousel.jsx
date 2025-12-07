@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // Aceptamos una nueva prop: onItemClick
@@ -55,6 +56,12 @@ const GenericCarousel = ({ items, title, onItemClick }) => {
       </button>
     </div>
   );
+};
+
+GenericCarousel.propTypes = {
+  items: PropTypes.array.isRequired,       // O PropTypes.arrayOf(PropTypes.shape({...})) para ser más específico
+  title: PropTypes.string,
+  onItemClick: PropTypes.func,  // Aquí validas que sea una función
 };
 
 export default GenericCarousel;
