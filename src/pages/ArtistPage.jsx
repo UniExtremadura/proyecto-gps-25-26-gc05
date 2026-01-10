@@ -7,7 +7,7 @@ import { getArtistById, getArtistAlbums, getArtistTracks } from '../api/contentA
 // 2. API Recomendaciones (Datos inteligentes)
 import { getArtistTopTracks } from '../api/recommendationApi';
 
-import { Disc, Music, User } from 'lucide-react';
+import { User } from 'lucide-react';
 
 const ArtistPage = () => {
     const { id } = useParams(); 

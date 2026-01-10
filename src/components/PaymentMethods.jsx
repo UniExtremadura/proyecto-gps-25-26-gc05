@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // IMPORTANTE: Usamos tus nombres de función
 import { listPaymentMethods, deletePaymentMethod } from '../api/usersApi'; 
 import { CreditCard, Trash2 } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 const PaymentMethods = ({ userId, onSelect, selectedId }) => {
     const [methods, setMethods] = useState([]);
@@ -47,6 +48,14 @@ const PaymentMethods = ({ userId, onSelect, selectedId }) => {
                         <div 
                             key={method.id} 
                             onClick={() => onSelect(method)}
+                            // 2. CORRECCIÓN ACCESIBILIDAD: Hacemos que el div sea navegable
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    onSelect(method);
+                                }
+                            }}
                             className={`p-4 border rounded-xl cursor-pointer flex justify-between items-center transition-all ${
                                 selectedId === method.id 
                                 ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
@@ -59,7 +68,7 @@ const PaymentMethods = ({ userId, onSelect, selectedId }) => {
                                 </div>
                                 <div>
                                     <p className="font-mono text-sm font-bold text-gray-800">
-                                        •••• {method.numC.slice(-4)}
+                                        •••• {method.numC ? method.numC.slice(-4) : '****'}
                                     </p>
                                     <p className="text-xs text-gray-500">Caduca: {method.cadC}</p>
                                 </div>
@@ -68,6 +77,7 @@ const PaymentMethods = ({ userId, onSelect, selectedId }) => {
                             <button 
                                 onClick={(e) => { e.stopPropagation(); handleDelete(method.id); }}
                                 className="text-gray-400 hover:text-red-500 p-2"
+                                aria-label="Eliminar tarjeta"
                             >
                                 <Trash2 size={16} />
                             </button>
@@ -77,6 +87,12 @@ const PaymentMethods = ({ userId, onSelect, selectedId }) => {
             )}
         </div>
     );
+};
+
+PaymentMethods.propTypes = {
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onSelect: PropTypes.func,
+  selectedId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default PaymentMethods;
